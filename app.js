@@ -330,6 +330,21 @@ function ring(frac, size, stroke, cls) {
 }
 // status colour: green in target, orange a little over, red clearly over
 function kcalState(v, t) { const f = t > 0 ? v / t : 0; return f > 1.03 ? 'over' : f > 1 ? 'near' : f >= 0.95 ? 'hit' : ''; }
+// kcal gauge: a 270° arc split in segments; each segment fills in turn, the lit part glows
+function gauge(frac, size = 152, stroke = 12, n = 9) {
+  const c = size / 2, r = (size - stroke) / 2 - 3;
+  const gap = 11, span = (270 - gap * (n - 1)) / n;
+  const pt = (a) => { const rad = (a * Math.PI) / 180; return `${(c + r * Math.cos(rad)).toFixed(2)} ${(c + r * Math.sin(rad)).toFixed(2)}`; };
+  const f = clamp(frac, 0, 1) * n;
+  let bg = '', fg = '';
+  for (let i = 0; i < n; i++) {
+    const a0 = 135 + i * (span + gap), d = `M${pt(a0)} A${r} ${r} 0 0 1 ${pt(a0 + span)}`;
+    bg += `<path d="${d}"/>`;
+    fg += `<path d="${d}" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="${(1 - clamp(f - i, 0, 1)).toFixed(3)}"/>`;
+  }
+  return `<svg class="gauge" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" aria-hidden="true">
+    <g class="g-bg" stroke-width="${stroke}">${bg}</g><g class="g-fg" stroke-width="${stroke}">${fg}</g></svg>`;
+}
 function macroBar(label, val, target, cls) {
   const frac = target > 0 ? val / target : 0;
   const st = frac > 1.12 ? ' over' : frac > 1.05 ? ' near' : frac >= 0.92 ? ' hit' : '';
@@ -388,7 +403,7 @@ function renderOggi() {
   }
   html += `<section class="card sum-card">
       <div class="sum-main">
-        <div class="ring-box ${kcalState(tot.kcal, t.kcal)}">${ring(t.kcal ? tot.kcal / t.kcal : 0, 152, 14, 'kcal-ring')}
+        <div class="ring-box ${kcalState(tot.kcal, t.kcal)}">${gauge(t.kcal ? tot.kcal / t.kcal : 0)}
           <div class="ring-center"><b class="big">${rollNum('kcal-' + day, fmt(Math.abs(left)))}</b><span>${over ? 'kcal oltre' : 'kcal rimaste'}</span></div></div>
         <div class="sum-side">
           <div><span>Obiettivo</span><b>${fmt(t.kcal)}</b></div>
@@ -421,6 +436,7 @@ function renderOggi() {
       ${!items.length && yItems.length ? `<button type="button" class="ghost-btn" data-act="copy-yday" data-slot="${s.id}">Come ieri · ${fmt(sumVals(yItems).kcal)} kcal</button>` : ''}</div>
       </section>`;
   });
+  if (day === dkey()) html += streakCard();
   $('v-oggi').innerHTML = html;
 }
 
@@ -930,6 +946,7 @@ function renderPeso() {
     ${W.length >= 2 ? chartSvg(W, wRange, p.target) : '<p class="empty">Registra il peso almeno due volte per vedere il grafico. Pesati al mattino, stessa bilancia: conta l\'andamento, non il singolo giorno.</p>'}
     ${W.length >= 2 ? '<p class="legend"><i class="lg-dot"></i>pesate <i class="lg-line"></i>media 7 giorni' + (p.target ? ' <i class="lg-target"></i>obiettivo' : '') + '</p>' : ''}</section>`;
   html += adviceCard('peso');
+  html += consistencyCard();
   if (W.length) {
     html += '<section class="card list-card"><h3>Storico</h3><ul class="w-list">' + W.slice().reverse().slice(0, 60).map((w, i, arr) => {
       const prev = arr[i + 1];
@@ -1319,7 +1336,7 @@ if (!state.profile.done) setTimeout(() => openProfileSheet(true), 400);
 // version is published it downloads in the background and the app reloads onto it
 // (never while you are typing in a field).
 // keep in step with VERSION in sw.js
-const APP_VERSION = '2026.11.22-12';
+const APP_VERSION = '2026.11.22-13';
 // drop the offline copy and load everything fresh from the site (data in localStorage stays)
 async function forceUpdate() {
   save();

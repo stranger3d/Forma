@@ -73,6 +73,8 @@ function defaults() {
     weights: [],    // [{d, kg}] sorted by date
     gym: { workouts: [], active: null, rest: 90, custom: [] },
     timer: null,    // {end, dur}
+    plan: planDefaults(), // meal plan, see plan.js
+    water: {},      // 'YYYY-MM-DD' -> ml
     settings: { theme: 'dark', online: true, haptics: true },
   };
 }
@@ -91,7 +93,8 @@ function merge(base, raw) {
   out.profile.custom = Object.assign({}, base.profile.custom, (raw.profile || {}).custom || {});
   out.gym = Object.assign({}, base.gym, raw.gym || {});
   out.settings = Object.assign({}, base.settings, raw.settings || {});
-  ['foods', 'diary'].forEach((k) => { if (!out[k] || typeof out[k] !== 'object' || Array.isArray(out[k])) out[k] = {}; });
+  out.plan = mergePlan(raw.plan);
+  ['foods', 'diary', 'water'].forEach((k) => { if (!out[k] || typeof out[k] !== 'object' || Array.isArray(out[k])) out[k] = {}; });
   ['recent', 'meals', 'weights'].forEach((k) => { if (!Array.isArray(out[k])) out[k] = []; });
   if (!Array.isArray(out.gym.workouts)) out.gym.workouts = [];
   if (!Array.isArray(out.gym.custom)) out.gym.custom = [];
@@ -346,7 +349,7 @@ let day = dkey();
 function dayEntries(k = day) { return state.diary[k] || []; }
 
 function renderOggi() {
-  const t = calc();
+  const t = targetsFor(day);
   const list = dayEntries();
   const tot = sumVals(list);
   const left = t.kcal - tot.kcal;
@@ -369,11 +372,12 @@ function renderOggi() {
         <div class="sum-side">
           <div><span>Obiettivo</span><b>${fmt(t.kcal)}</b></div>
           <div><span>Mangiate</span><b>${fmt(tot.kcal)}</b></div>
-          <button type="button" class="goal-chip" data-act="tab-profilo">${esc(g.name)}${esc(paceTxt)}</button>
+          ${t.type ? `<button type="button" class="goal-chip" data-act="plan-open">Piano · ${esc(DAY_TYPES[t.type].name)}</button>` : `<button type="button" class="goal-chip" data-act="tab-profilo">${esc(g.name)}${esc(paceTxt)}</button>`}
         </div>
       </div>
       <div class="macros">${macroBar('Proteine', tot.p, t.p, 'p')}${macroBar('Carboidrati', tot.c, t.c, 'c')}${macroBar('Grassi', tot.f, t.f, 'f')}</div>
     </section>`;
+  html += planCard(day);
   SLOTS.forEach((s) => {
     const items = list.filter((e) => e.slot === s.id);
     const st = sumVals(items);
@@ -391,6 +395,7 @@ function renderOggi() {
       }).join('') + '</ul>';
     }
     html += `<div class="slot-actions"><button type="button" class="add-btn" data-act="add" data-slot="${s.id}">${I.plus}<span>Aggiungi</span></button>
+      ${!items.length && t.type && planSlotKcal(day, s.id) > 0 ? `<button type="button" class="ghost-btn" data-act="slot-plan" data-slot="${s.id}">Dal piano · ${fmt(planSlotKcal(day, s.id))} kcal</button>` : ''}
       ${!items.length && yItems.length ? `<button type="button" class="ghost-btn" data-act="copy-yday" data-slot="${s.id}">Come ieri · ${fmt(sumVals(yItems).kcal)} kcal</button>` : ''}</div>
       </section>`;
   });
@@ -410,6 +415,24 @@ $('v-oggi').addEventListener('click', (ev) => {
   else if (act === 'entry') { const e = dayEntries().find((x) => x.id === b.dataset.id); if (e) openQtySheet({ entry: e }); }
   else if (act === 'copy-yday') copySlot(addDays(day, -1), b.dataset.slot);
   else if (act === 'slot-menu') openSlotMenu(b.dataset.slot);
+  else if (act === 'plan-open') openPlanSheet();
+  else if (act === 'plan-fill' || act === 'slot-plan') {
+    const added = fillFromPlan(day, act === 'slot-plan' ? b.dataset.slot : null);
+    if (!added.length) return;
+    haptic(1); renderOggi();
+    toast(`Dal piano: ${fmt(sumVals(added).kcal)} kcal aggiunte`, () => { removeEntries(added.map((a) => a.id)); renderOggi(); });
+  } else if (act === 'water+' || act === 'water-') { addWater(day, act === 'water+' ? 250 : -250); haptic(1); renderOggi(); }
+  else if (act === 'refeed-today') { setDayType(day, 'refeed'); haptic(1); renderOggi(); toast('Oggi ricarica: più carboidrati'); }
+});
+$('v-oggi').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-daytype]'); if (!b) return;
+  const cur = dayType(day);
+  setDayType(day, b.dataset.daytype === cur && state.plan.days[day] ? null : b.dataset.daytype);
+  haptic(1); renderOggi();
+});
+document.addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-advice]'); if (!b) return;
+  applyAdvice(+b.dataset.advice);
 });
 
 function addEntries(items, slot, k = day) {
@@ -606,6 +629,7 @@ function openQtySheet(opts) {
       <div class="sheet-actions">
         ${entry ? '<button type="button" class="btn danger-ghost" id="qty-del">Elimina</button>' : ''}
         <button type="button" class="btn primary" id="qty-ok">${entry ? 'Salva' : 'Aggiungi'}</button></div>
+      ${entry ? '<button type="button" class="btn wide" id="qty-swap">⇄ Sostituisci con un\'alternativa</button>' : ''}
       <button type="button" class="link center" id="qty-edit-food">Modifica i valori di questo alimento</button>`,
     onMount(el) {
       const inp = el.querySelector('#qty-g');
@@ -632,6 +656,22 @@ function openQtySheet(opts) {
           toast(`${food.name}: ${fmt(entryVals({ n: food.n, g }).kcal)} kcal`);
         }
         haptic(1); sh.close(); if (opts.after) opts.after(); renderOggi();
+      });
+      const swap = el.querySelector('#qty-swap');
+      if (swap) swap.addEventListener('click', () => {
+        const g = num(inp.value) > 0 ? num(inp.value) : entry.g;
+        sh.close();
+        openSwapSheet({ food: entry.food, name: entry.name, n: entry.n, g }, (items) => {
+          const k = Object.keys(state.diary).find((d) => state.diary[d].includes(entry)) || day;
+          const list = state.diary[k];
+          const at = list.indexOf(entry);
+          const backup = list.slice();
+          const fresh = items.map((it) => ({ id: uid(), slot: entry.slot, food: it.food, name: it.name, brand: it.brand || '', n: Object.assign({}, it.n), g: it.g }));
+          list.splice(at, 1, ...fresh);
+          items.forEach((it) => touchRecent(it.food));
+          save(); renderOggi();
+          toast(`Sostituito con ${items.map((x) => x.name.toLowerCase()).join(' + ')}`, () => { state.diary[k] = backup; save(); renderOggi(); });
+        });
       });
       const del = el.querySelector('#qty-del');
       if (del) del.addEventListener('click', () => {
@@ -866,6 +906,7 @@ function renderPeso() {
   html += `<section class="card chart-card"><div class="seg sm" id="w-range">${[[30, '1M'], [90, '3M'], [180, '6M'], [0, 'Tutto']].map(([d, l]) => `<button type="button" data-range="${d}" class="${d === wRange ? 'on' : ''}">${l}</button>`).join('')}</div>
     ${W.length >= 2 ? chartSvg(W, wRange, p.target) : '<p class="empty">Registra il peso almeno due volte per vedere il grafico. Pesati al mattino, stessa bilancia: conta l\'andamento, non il singolo giorno.</p>'}
     ${W.length >= 2 ? '<p class="legend"><i class="lg-dot"></i>pesate <i class="lg-line"></i>media 7 giorni' + (p.target ? ' <i class="lg-target"></i>obiettivo' : '') + '</p>' : ''}</section>`;
+  html += adviceCard('peso');
   if (W.length) {
     html += '<section class="card list-card"><h3>Storico</h3><ul class="w-list">' + W.slice().reverse().slice(0, 60).map((w, i, arr) => {
       const prev = arr[i + 1];
@@ -1228,13 +1269,18 @@ function renderProfilo() {
     <div class="seg goal-seg" id="goal-seg">${Object.entries(GOALS).map(([k, g]) => `<button type="button" data-goal="${k}" class="${p.goal === k ? 'on' : ''}">${g.name}</button>`).join('')}</div>
     ${paces.length ? `<p class="list-label">Ritmo a settimana</p><div class="seg sm" id="pace-seg">${paces.map((v) => `<button type="button" data-pace="${v}" class="${p.pace === v ? 'on' : ''}">${paceLbl(v)}</button>`).join('')}</div>` : ''}
     <p class="hint">${p.goal === 'cut' ? `Deficit di ${fmt(-t.delta)} kcal al giorno sul tuo consumo stimato. Proteine alte (2 g per kg) per non perdere muscolo.` : p.goal === 'bulk' ? `Surplus di ${fmt(t.delta)} kcal al giorno: crescita lenta per mettere più muscolo e meno grasso.` : 'Calorie pari al consumo stimato: il peso resta stabile.'}${t.floored ? ' Ho tenuto le calorie al minimo consigliato: meglio un ritmo più lento.' : ''}</p></section>`;
-  html += `<section class="card targets"><div class="tg-head"><div><span class="muted">Ogni giorno</span><b class="big">${fmt(t.kcal)}<small> kcal</small></b></div>
+  if (state.plan.on) {
+    const T = state.plan.targets;
+    html += `<button type="button" class="card plan-row" data-p="plan"><b>Piano alimentare attivo</b><span>Allenamento ${fmt(T.on.kcal)} kcal · Riposo ${fmt(T.off.kcal)} kcal · ricarica ogni ${state.plan.refeed.every / 7} settimane. Nel diario valgono questi obiettivi.</span>${I.chev}</button>`;
+  }
+  html += `<section class="card targets"><div class="tg-head"><div><span class="muted">${state.plan.on ? 'Calcolo automatico (senza piano)' : 'Ogni giorno'}</span><b class="big">${fmt(t.kcal)}<small> kcal</small></b></div>
       <button type="button" class="pill-btn" data-p="custom">${t.custom ? 'Personalizzati' : 'Personalizza'}</button></div>
     <div class="tg-macros"><div class="p"><b>${fmt(t.p)} g</b><span>proteine</span></div><div class="c"><b>${fmt(t.c)} g</b><span>carboidrati</span></div><div class="f"><b>${fmt(t.f)} g</b><span>grassi</span></div></div>
     <p class="hint">Metabolismo basale ${fmt(t.bmr)} kcal · consumo stimato ${fmt(t.tdee)} kcal (formula Mifflin-St Jeor, attività “${esc(act[1].toLowerCase())}”). Calcolato sul peso attuale: si aggiorna quando registri il peso.</p></section>`;
   html += `<section class="card rows">
     <button type="button" class="row" data-p="profile"><span>I tuoi dati<small>${p.sex === 'f' ? 'Donna' : 'Uomo'}, ${p.age} anni, ${p.height} cm, ${fmt1(currentWeight())} kg · ${esc(act[1])}</small></span>${I.chev}</button>
     <button type="button" class="row" data-p="foods"><span>I miei alimenti<small>${Object.keys(state.foods).length} salvati · ${Object.keys(BUILTIN).length} di base</small></span>${I.chev}</button>
+    ${state.plan.on ? '' : '<button type="button" class="row" data-p="plan"><span>Piano alimentare<small>Spento: giorni di allenamento e riposo, ricarica, sostituzioni</small></span>' + I.chev + '</button>'}
     <button type="button" class="row" data-p="meals"><span>Pasti salvati<small>${state.meals.length ? state.meals.length + (state.meals.length === 1 ? ' pasto' : ' pasti') : 'Nessuno'}</small></span>${I.chev}</button>
   </section>
   <section class="card rows">
@@ -1266,6 +1312,7 @@ $('v-profilo').addEventListener('click', (ev) => {
   else if (a === 'custom') openCustomSheet();
   else if (a === 'foods') openFoodsList();
   else if (a === 'meals') openMealsList();
+  else if (a === 'plan') openPlanSheet();
   else if (a === 'export') exportBackup();
   else if (a === 'import') $('import-file').click();
 });

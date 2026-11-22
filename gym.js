@@ -453,9 +453,10 @@ function timeCardInner(w) {
   const finish = now + rem * 1000;
   const over = Math.ceil((finish - w.deadline) / 60000);
   const frac = clamp(el / total, 0, 1);
-  return `<div class="tc-top"><div><span class="muted">Tempo rimasto</span><b class="big" id="wo-clock">${left >= 0 ? clock(left) : '−' + clock(-left)}</b></div>
-      <div class="tc-side"><span>fine entro le <b>${hhmm(w.deadline)}</b></span><span>${rem > 0 ? `chiudi ≈ <b>${hhmm(finish)}</b>` : 'scheda finita'}</span></div></div>
-    <div class="tbar ${over > 0 ? 'over' : ''}"><i style="transform:scaleX(${frac})"></i><em style="left:${clamp(((finish - w.start) / 1000) / total, 0, 1) * 100}%"></em></div>
+  const all = w.ex.reduce((a, e) => a + e.sets.length, 0), done = w.ex.reduce((a, e) => a + e.sets.filter((s) => s.done).length, 0);
+  return `<div class="tc-hero"><span class="muted">Tempo rimasto · fine entro le ${hhmm(w.deadline)}</span><b id="wo-clock" class="${left < 0 ? 'late' : ''}">${left >= 0 ? clock(left) : '−' + clock(-left)}</b></div>
+    <div class="tc-band"><div><b>${clock(el)}</b><small>trascorso</small></div><div><b>${done}<small>/${all}</small></b><small>serie</small></div><div><b>${rem > 0 ? hhmm(finish) : '✓'}</b><small>${rem > 0 ? 'chiudi verso' : 'scheda finita'}</small></div></div>
+    <div class="tbar stripes ${over > 0 ? 'over' : ''}"><i style="transform:scaleX(${frac})"></i><em style="left:${clamp(((finish - w.start) / 1000) / total, 0, 1) * 100}%"></em></div>
     ${over > 0 ? `<p class="tc-warn">Sfori di ${over} min: ${over > 4 ? 'salta l\'ultimo blocco o togli una serie agli isolamenti' : 'accorcia di poco i recuperi'}.</p>` : `<p class="tc-ok">In tempo${rem > 0 ? `, ${Math.max(0, Math.floor((w.deadline - finish) / 60000))} min di margine` : ''}.</p>`}`;
 }
 // refresh only the time card every second

@@ -49,10 +49,6 @@ const ACTIVITY = [
   [1.725, 'Intenso', '6–7 allenamenti a settimana'],
   [1.9, 'Molto intenso', 'Lavoro fisico e allenamenti ogni giorno'],
 ];
-const EXERCISES = ['Panca piana', 'Panca inclinata manubri', 'Croci ai cavi', 'Chest press', 'Lat machine', 'Trazioni', 'Rematore bilanciere',
-  'Rematore manubrio', 'Pulley', 'Military press', 'Lento avanti manubri', 'Alzate laterali', 'Face pull', 'Curl bilanciere', 'Curl manubri',
-  'Curl a martello', 'French press', 'Pushdown ai cavi', 'Dip', 'Squat', 'Leg press', 'Affondi', 'Stacco da terra', 'Stacco rumeno',
-  'Leg curl', 'Leg extension', 'Hip thrust', 'Calf raise', 'Plank', 'Crunch', 'Tapis roulant', 'Cyclette'];
 
 // built-in foods, keyed g:<slug>
 const BUILTIN = {};
@@ -71,7 +67,7 @@ function defaults() {
     meals: [],      // saved meals {id, name, items:[{food, name, brand, n, g}]}
     diary: {},      // 'YYYY-MM-DD' -> [{id, slot, food, name, brand, n, g}]
     weights: [],    // [{d, kg}] sorted by date
-    gym: { workouts: [], active: null, rest: 90, custom: [] },
+    gym: { workouts: [], active: null, rest: 90, custom: [], cfg: gymDefaults() }, // cfg: split, templates, times (gym.js)
     timer: null,    // {end, dur}
     plan: planDefaults(), // meal plan, see plan.js
     water: {},      // 'YYYY-MM-DD' -> ml
@@ -98,6 +94,7 @@ function merge(base, raw) {
   ['recent', 'meals', 'weights'].forEach((k) => { if (!Array.isArray(out[k])) out[k] = []; });
   if (!Array.isArray(out.gym.workouts)) out.gym.workouts = [];
   if (!Array.isArray(out.gym.custom)) out.gym.custom = [];
+  out.gym.cfg = mergeGym((raw.gym || {}).cfg);
   return out;
 }
 
@@ -1004,200 +1001,7 @@ function openTargetSheet() {
   });
 }
 
-// ================= PALESTRA =================
-function activeWorkout() { return state.gym.workouts.find((w) => w.id === state.gym.active) || null; }
-function lastSets(name, exceptId) {
-  for (let i = state.gym.workouts.length - 1; i >= 0; i--) {
-    const w = state.gym.workouts[i];
-    if (w.id === exceptId) continue;
-    const ex = w.ex.find((e) => e.name === name);
-    if (ex) { const sets = ex.sets.filter((s) => s.done); if (sets.length) return { sets, date: w.date }; }
-  }
-  return null;
-}
-function setsText(sets) { return sets.map((s) => `${s.kg !== '' && s.kg != null ? fmt1(num(s.kg)) : '–'}×${s.reps || '–'}`).join(', '); }
-function volume(w) { return w.ex.reduce((a, e) => a + e.sets.reduce((b, s) => b + (s.done ? (num(s.kg) || 0) * (num(s.reps) || 0) : 0), 0), 0); }
-function dur(ms) { const m = Math.round(ms / 60000); return m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${pad(m % 60)}`; }
-function clock(sec) { sec = Math.max(0, Math.round(sec)); return `${Math.floor(sec / 60)}:${pad(sec % 60)}`; }
-
-function renderPalestra() {
-  const w = activeWorkout();
-  let html = '<header class="top"><h1>Palestra</h1>' + (w ? '' : `<button type="button" class="pill-btn" data-g="timer">${I.timer}<span>Timer</span></button>`) + '</header>';
-  html += `<section class="card rest-card"><span>Recupero</span><div class="seg sm" id="rest-seg">${[45, 60, 90, 120, 180].map((s) => `<button type="button" data-rest="${s}" class="${state.gym.rest === s ? 'on' : ''}">${s < 60 ? s + 's' : clock(s)}</button>`).join('')}</div></section>`;
-  if (w) {
-    const doneSets = w.ex.reduce((a, e) => a + e.sets.filter((s) => s.done).length, 0);
-    html += `<section class="card wo-head"><div><span class="muted">Allenamento in corso</span><b class="big" id="wo-clock">${clock((Date.now() - w.start) / 1000)}</b></div>
-      <div class="wo-stats"><span><b>${doneSets}</b> serie</span><span><b>${fmt(volume(w))}</b> kg volume</span></div>
-      <button type="button" class="btn primary sm" data-g="finish">Termina</button></section>`;
-    w.ex.forEach((e, ei) => {
-      const last = lastSets(e.name, w.id);
-      html += `<section class="card ex" data-ei="${ei}"><div class="ex-head"><div><h3>${esc(e.name)}</h3>${last ? `<small class="muted">Ultima volta: ${esc(setsText(last.sets))}</small>` : '<small class="muted">Prima volta</small>'}</div>
-        <button type="button" class="icon-btn sm" data-g="ex-menu" data-ei="${ei}" aria-label="Altre azioni ${esc(e.name)}">${I.more}</button></div>
-        <div class="sets"><div class="set-row head"><span>Serie</span><span>kg</span><span>Rip.</span><span></span></div>
-        ${e.sets.map((s, si) => {
-          // hint: same set last time, otherwise the set just above in this workout
-          const prevHere = si ? e.sets[si - 1] : null;
-          const ph = (last && last.sets[Math.min(si, last.sets.length - 1)]) || (prevHere && (prevHere.kg !== '' || prevHere.reps !== '') ? prevHere : null);
-          return `<div class="set-row ${s.done ? 'done' : ''}" data-si="${si}"><button type="button" class="set-n" data-g="set-rm" data-ei="${ei}" data-si="${si}" aria-label="Togli serie ${si + 1}">${si + 1}</button>
-            <input inputmode="decimal" data-f="kg" data-ei="${ei}" data-si="${si}" value="${esc(s.kg)}" placeholder="${ph && ph.kg !== '' ? esc(fmt1(num(ph.kg))) : ''}" aria-label="Kg serie ${si + 1}">
-            <input inputmode="numeric" data-f="reps" data-ei="${ei}" data-si="${si}" value="${esc(s.reps)}" placeholder="${ph ? esc(ph.reps) : ''}" aria-label="Ripetizioni serie ${si + 1}">
-            <button type="button" class="set-ok" data-g="set-ok" data-ei="${ei}" data-si="${si}" aria-label="Serie ${si + 1} fatta" aria-pressed="${s.done}">${I.check}</button></div>`;
-        }).join('')}</div>
-        <button type="button" class="ghost-btn" data-g="set-add" data-ei="${ei}">${I.plus}<span>Serie</span></button></section>`;
-    });
-    html += `<button type="button" class="add-btn big-add" data-g="ex-add">${I.plus}<span>Aggiungi esercizio</span></button>`;
-  } else {
-    html += `<button type="button" class="card start-card" data-g="start"><b>Inizia allenamento</b><span>Aggiungi esercizi, segna serie, peso e ripetizioni. Il recupero parte da solo.</span>${I.chev}</button>`;
-    const hist = state.gym.workouts.filter((x) => x.end).slice().reverse();
-    if (hist.length) {
-      const weekAgo = Date.now() - 7 * 864e5;
-      const wk = hist.filter((x) => x.start >= weekAgo).length;
-      html += `<section class="card list-card"><h3>Storico <small class="muted">· ${wk} questa settimana</small></h3><ul class="wo-list">` + hist.slice(0, 40).map((x) => `<li><button type="button" data-g="wo-open" data-id="${x.id}">
-        <span><b>${esc(dayLabel(x.date))}</b><small>${esc(x.ex.map((e) => e.name).join(', '))}</small></span>
-        <span class="wo-meta">${dur(x.end - x.start)}<small>${fmt(volume(x))} kg</small></span></button></li>`).join('') + '</ul></section>';
-    }
-  }
-  $('v-palestra').innerHTML = html;
-}
-const gymView = $('v-palestra');
-gymView.addEventListener('input', (ev) => {
-  const t = ev.target; if (!t.dataset.f) return;
-  const w = activeWorkout(); if (!w) return;
-  const s = w.ex[+t.dataset.ei].sets[+t.dataset.si];
-  s[t.dataset.f] = t.value.trim();
-  saveSoon();
-});
-gymView.addEventListener('focusin', (ev) => { if (ev.target.dataset.f) ev.target.select(); });
-gymView.addEventListener('click', (ev) => {
-  const r = ev.target.closest('[data-rest]');
-  if (r) { state.gym.rest = +r.dataset.rest; save(); gymView.querySelectorAll('#rest-seg button').forEach((b) => b.classList.toggle('on', b === r)); haptic(1); return; }
-  const b = ev.target.closest('[data-g]'); if (!b) return;
-  const g = b.dataset.g;
-  const w = activeWorkout();
-  if (g === 'timer') startTimer(state.gym.rest);
-  else if (g === 'start') { startWorkout([]); openExercisePicker(); }
-  else if (g === 'ex-add') openExercisePicker();
-  else if (g === 'finish') finishWorkout();
-  else if (g === 'wo-open') openWorkoutDetail(b.dataset.id);
-  else if (!w) return;
-  else if (g === 'set-ok') {
-    const ei = +b.dataset.ei, si = +b.dataset.si;
-    const s = w.ex[ei].sets[si];
-    const row = b.closest('.set-row');
-    s.done = !s.done;
-    if (s.done) {
-      row.querySelectorAll('input').forEach((inp) => { if (!inp.value && inp.placeholder) { inp.value = inp.placeholder; s[inp.dataset.f] = inp.placeholder.replace(',', '.'); } });
-      haptic(1);
-      startTimer(state.gym.rest);
-    }
-    save();
-    renderPalestra();
-  } else if (g === 'set-add') {
-    const sets = w.ex[+b.dataset.ei].sets;
-    const prev = sets[sets.length - 1];
-    sets.push({ kg: prev ? prev.kg : '', reps: prev ? prev.reps : '', done: false });
-    save(); renderPalestra();
-  } else if (g === 'set-rm') {
-    const sets = w.ex[+b.dataset.ei].sets;
-    if (sets.length <= 1) return;
-    if (!confirm(`Togliere la serie ${+b.dataset.si + 1}?`)) return;
-    sets.splice(+b.dataset.si, 1); save(); renderPalestra();
-  } else if (g === 'ex-menu') {
-    const ei = +b.dataset.ei;
-    const e = w.ex[ei];
-    const sh = openSheet({
-      title: e.name,
-      body: `<div class="menu-list"><button type="button" data-m="up" ${ei ? '' : 'disabled'}>Sposta su</button><button type="button" data-m="down" ${ei < w.ex.length - 1 ? '' : 'disabled'}>Sposta giù</button><button type="button" data-m="rm" class="danger">Togli esercizio</button></div>`,
-      onMount(el) {
-        el.addEventListener('click', (x) => {
-          const m = x.target.closest('[data-m]'); if (!m) return;
-          if (m.dataset.m === 'up') w.ex.splice(ei - 1, 0, w.ex.splice(ei, 1)[0]);
-          else if (m.dataset.m === 'down') w.ex.splice(ei + 1, 0, w.ex.splice(ei, 1)[0]);
-          else w.ex.splice(ei, 1);
-          save(); sh.close(); renderPalestra();
-        });
-      },
-    });
-  }
-});
-function newExercise(name, w) {
-  const last = lastSets(name, w && w.id);
-  const n = last ? last.sets.length : 3;
-  return { name, sets: Array.from({ length: n }, () => ({ kg: '', reps: '', done: false })) };
-}
-function startWorkout(names) {
-  const w = { id: uid(), date: dkey(), start: Date.now(), end: null, ex: [] };
-  state.gym.workouts.push(w);
-  state.gym.active = w.id;
-  names.forEach((n) => w.ex.push(newExercise(n, w)));
-  save();
-  if (tab !== 'palestra') showTab('palestra'); else renderPalestra();
-  return w;
-}
-function finishWorkout() {
-  const w = activeWorkout(); if (!w) return;
-  const done = w.ex.reduce((a, e) => a + e.sets.filter((s) => s.done).length, 0);
-  if (!done) {
-    if (!confirm('Nessuna serie segnata come fatta. Annullare questo allenamento?')) return;
-    state.gym.workouts = state.gym.workouts.filter((x) => x !== w);
-  } else {
-    if (!confirm('Terminare l\'allenamento?')) return;
-    w.ex = w.ex.map((e) => Object.assign({}, e, { sets: e.sets.filter((s) => s.done) })).filter((e) => e.sets.length);
-    w.end = Date.now();
-    toast(`Allenamento salvato: ${dur(w.end - w.start)}, ${fmt(volume(w))} kg`);
-  }
-  state.gym.active = null;
-  stopTimer();
-  save(); renderPalestra();
-}
-function openExercisePicker() {
-  const used = () => { const s = new Set(); state.gym.workouts.forEach((w) => w.ex.forEach((e) => s.add(e.name))); return s; };
-  const sh = openSheet({
-    title: 'Aggiungi esercizio', cls: 'tall',
-    body: `<div class="search-row"><input type="search" id="ex-q" placeholder="Cerca o scrivi un esercizio nuovo" autocomplete="off" enterkeyhint="done"></div><div id="ex-list" class="pick-list"></div>`,
-    onMount(el) {
-      const inp = el.querySelector('#ex-q');
-      const box = el.querySelector('#ex-list');
-      const draw = () => {
-        const q = inp.value.trim();
-        const u = used();
-        const all = Array.from(new Set([...u, ...state.gym.custom, ...EXERCISES]));
-        const words = norm(q).split(/\s+/).filter(Boolean);
-        const list = all.filter((n) => words.every((x) => norm(n).includes(x))).sort((a, b) => (u.has(b) - u.has(a)) || a.localeCompare(b, 'it'));
-        const exact = all.some((n) => norm(n) === norm(q));
-        box.innerHTML = (q && !exact ? `<button type="button" class="pick" data-ex="${esc(q)}" data-new="1"><span class="pk-name">Aggiungi “${esc(q)}”<small>nuovo esercizio</small></span>${I.plus}</button>` : '')
-          + list.map((n) => { const l = lastSets(n); return `<button type="button" class="pick" data-ex="${esc(n)}"><span class="pk-name">${esc(n)}${l ? `<small>${esc(dayLabel(l.date))}: ${esc(setsText(l.sets))}</small>` : ''}</span></button>`; }).join('');
-      };
-      inp.addEventListener('input', draw);
-      inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); const f = box.querySelector('[data-ex]'); if (f) f.click(); } });
-      box.addEventListener('click', (e) => {
-        const b = e.target.closest('[data-ex]'); if (!b) return;
-        const name = b.dataset.ex;
-        if (b.dataset.new && !state.gym.custom.includes(name)) state.gym.custom.push(name);
-        const w = activeWorkout() || startWorkout([]);
-        w.ex.push(newExercise(name, w));
-        save(); haptic(1); sh.close(); renderPalestra();
-      });
-      draw();
-    },
-  });
-}
-function openWorkoutDetail(id) {
-  const w = state.gym.workouts.find((x) => x.id === id); if (!w) return;
-  const sh = openSheet({
-    title: `${dayLabel(w.date)} · ${dur(w.end - w.start)}`,
-    body: `<div class="wo-detail">${w.ex.map((e) => `<div class="wd-ex"><b>${esc(e.name)}</b><span>${esc(setsText(e.sets))}</span></div>`).join('')}
-      <p class="hint">Volume ${fmt(volume(w))} kg · ${w.ex.reduce((a, e) => a + e.sets.length, 0)} serie</p></div>
-      <div class="sheet-actions"><button type="button" class="btn danger-ghost" id="wd-del">Elimina</button><button type="button" class="btn primary" id="wd-again" ${state.gym.active ? 'disabled' : ''}>Rifai questo</button></div>`,
-    onMount(el) {
-      el.querySelector('#wd-again').addEventListener('click', () => { sh.close(); startWorkout(w.ex.map((e) => e.name)); });
-      el.querySelector('#wd-del').addEventListener('click', () => {
-        if (!confirm('Eliminare questo allenamento dallo storico?')) return;
-        state.gym.workouts = state.gym.workouts.filter((x) => x !== w); save(); sh.close(); renderPalestra();
-      });
-    },
-  });
-}
+// ================= PALESTRA: see gym.js =================
 
 // ---------- rest timer (keeps the end time, so it survives the app going to background) ----------
 let timerTick = null, timerEndedAt = 0;
@@ -1236,8 +1040,6 @@ function runTimer() {
     $('timer-label').textContent = 'Recupero';
     $('timer-val').textContent = clock(Math.ceil(left));
     arc.style.strokeDashoffset = `${C * (1 - left / state.timer.dur)}px`;
-    const wc = $('wo-clock'); const w = activeWorkout();
-    if (wc && w) wc.textContent = clock((Date.now() - w.start) / 1000);
   };
   step();
   timerTick = setInterval(step, 250);
@@ -1254,8 +1056,6 @@ $('timer').addEventListener('click', (ev) => {
   timerEndedAt = 0;
   save(); haptic(1); runTimer();
 });
-// the workout clock also ticks without a rest timer running
-setInterval(() => { if (tab !== 'palestra' || state.timer) return; const wc = $('wo-clock'); const w = activeWorkout(); if (wc && w) wc.textContent = clock((Date.now() - w.start) / 1000); }, 1000);
 
 // ================= PROFILO =================
 function renderProfilo() {
@@ -1477,6 +1277,7 @@ document.addEventListener('visibilitychange', () => {
   runTimer();
 });
 
+gymInit();
 applyTheme();
 render();
 runTimer();

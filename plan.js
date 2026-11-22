@@ -21,17 +21,16 @@ const PLAN_START = {
   // ON ≈ 2.410 kcal · P 178 · C 268 · G 71 — OFF ≈ 2.200 kcal · P 184 · C 219 · G 69
   meals: {
     on: [
-      ['Colazione (facoltativa)', 'colazione', [['Gallette di segale', 70], ['Yogurt greco 0%', 250], ['Mandorle', 20]], true],
       ['Pranzo post-allenamento', 'pranzo', [['Riso jasmine (crudo)', 140], ['Petto di pollo', 230], ['Zucchine', 150], ['Olio extravergine', 15]]],
-      ['Spuntino pomeriggio', 'spuntini', [['Pane integrale', 80], ['Uovo intero', 165], ['Mela', 180]]],
+      ['Merenda', 'merenda', [['Pane integrale', 80], ['Uovo intero', 165], ['Mela', 180]]],
       ['Cena', 'cena', [['Patate dolci', 200], ['Merluzzo', 220], ['Verdure miste', 150], ['Olio extravergine', 15]]],
-      ['Spuntino sera', 'spuntini', [['Yogurt greco 0%', 300], ["Fiocchi d'avena", 40], ['Miele', 10], ['Mandorle', 30]]],
+      ['Pre nanna', 'prenanna', [['Yogurt greco 0%', 300], ["Fiocchi d'avena", 40], ['Miele', 10], ['Mandorle', 30]]],
     ],
     off: [
       ['Pranzo', 'pranzo', [['Farro (crudo)', 110], ['Petto di pollo', 230], ['Verdure miste', 150], ['Olio extravergine', 15]]],
-      ['Spuntino pomeriggio', 'spuntini', [['Pane integrale', 80], ['Uovo intero', 165], ['Mela', 180]]],
+      ['Merenda', 'merenda', [['Pane integrale', 80], ['Uovo intero', 165], ['Mela', 180]]],
       ['Cena', 'cena', [['Patate dolci', 150], ['Merluzzo', 220], ['Verdure miste', 150], ['Olio extravergine', 15]]],
-      ['Spuntino sera', 'spuntini', [['Yogurt greco 0%', 300], ["Fiocchi d'avena", 35], ['Miele', 10], ['Mandorle', 25]]],
+      ['Pre nanna', 'prenanna', [['Yogurt greco 0%', 300], ["Fiocchi d'avena", 35], ['Miele', 10], ['Mandorle', 25]]],
     ],
   },
 };
@@ -60,7 +59,7 @@ function planDefaults() {
     meals[type] = list.map(([name, slot, items, opt], i) => ({ id: type + i, name, slot, opt: !!opt, items: items.map(([f, g]) => ({ food: pfid(f), g })) }));
   });
   return {
-    ver: 2,
+    ver: 3,
     on: true,
     start: null,             // first day the plan was used, for the refeed count
     days: {},                // 'YYYY-MM-DD' -> 'on' | 'off' | 'refeed' (chosen by hand)
@@ -77,7 +76,18 @@ function mergePlan(raw) {
   out.targets = { on: Object.assign({}, base.targets.on, (raw.targets || {}).on || {}), off: Object.assign({}, base.targets.off, (raw.targets || {}).off || {}) };
   out.meals = Object.assign({}, base.meals, raw.meals || {});
   // version 1 had breakfast every day: move to the no-breakfast plan
-  if (raw.ver !== 2) { out.meals = base.meals; out.ver = 2; }
+  // version 3: no breakfast, snacks renamed Merenda and Pre nanna (same foods)
+  if (raw.ver !== 3) {
+    if (raw.ver === 2) {
+      ['on', 'off'].forEach((t) => {
+        const list = (out.meals[t] || []).filter((m) => m.slot !== 'colazione');
+        let n = 0;
+        list.forEach((m) => { if (m.slot === 'spuntini') { m.slot = n ? 'prenanna' : 'merenda'; m.name = n ? 'Pre nanna' : 'Merenda'; n++; } delete m.opt; });
+        out.meals[t] = list;
+      });
+    } else out.meals = base.meals;
+    out.ver = 3;
+  }
   ['on', 'off'].forEach((k) => { if (!Array.isArray(out.meals[k])) out.meals[k] = base.meals[k]; });
   out.refeed = Object.assign({}, base.refeed, raw.refeed || {});
   if (!out.days || typeof out.days !== 'object' || Array.isArray(out.days)) out.days = {};
@@ -427,7 +437,7 @@ function openPlanSheet() {
           <div class="row static"><span>Ogni</span><div class="seg sm" id="pl-every">${[14, 21, 28].map((d) => `<button type="button" data-every="${d}" class="${P.refeed.every === d ? 'on' : ''}">${d / 7} sett</button>`).join('')}</div></div>
           <div class="row static"><span>Calorie in più</span><div class="seg sm" id="pl-extra">${[300, 400, 500, 600].map((d) => `<button type="button" data-extra="${d}" class="${P.refeed.extra === d ? 'on' : ''}">+${d}</button>`).join('')}</div></div>
           <label class="row static"><span>Compensa nella settimana<small>Toglie le kcal della ricarica dagli altri giorni: la media resta quella del piano</small></span><input type="checkbox" class="switch" id="pl-bal" ${P.refeed.balance ? 'checked' : ''}></label>
-          <div class="notes"><p><b>Acqua</b> almeno ${fmt1(P.water / 1000)} litri al giorno.</p><p><b>Colazione</b>: di solito la salti, quindi pranzo e spuntini sono più carichi. Se un giorno la fai, aggiungila dal diario e togli lo stesso dal pranzo (carboidrati) e dallo spuntino serale (yogurt).</p><p><b>Carboidrati</b>: puoi spostarli tra i pasti se serve.</p><p><b>Sale</b>: tienilo sotto controllo se tendi a trattenere liquidi.</p><p class="muted">È il tuo piano personale, non un parere medico.</p></div>
+          <div class="notes"><p><b>Acqua</b> almeno ${fmt1(P.water / 1000)} litri al giorno.</p><p><b>Niente colazione</b>: il primo pasto è il pranzo, per questo pranzo, merenda e pre nanna sono più carichi.</p><p><b>Carboidrati</b>: puoi spostarli tra i pasti se serve.</p><p><b>Sale</b>: tienilo sotto controllo se tendi a trattenere liquidi.</p><p class="muted">È il tuo piano personale, non un parere medico.</p></div>
           <div class="sheet-actions"><button type="button" class="btn danger-ghost" id="pl-reset">Ripristina piano iniziale</button></div>`;
       };
       const meal = (mi) => state.plan.meals[type][mi];

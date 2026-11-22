@@ -32,10 +32,10 @@ const dayLabel = (k) => {
 };
 
 const SLOTS = [
-  { id: 'colazione', name: 'Colazione' },
   { id: 'pranzo', name: 'Pranzo' },
+  { id: 'merenda', name: 'Merenda' },
   { id: 'cena', name: 'Cena' },
-  { id: 'spuntini', name: 'Spuntini' },
+  { id: 'prenanna', name: 'Pre nanna' },
 ];
 const GOALS = {
   cut: { name: 'Dimagrire', short: 'Dimagrimento' },
@@ -90,6 +90,9 @@ function merge(base, raw) {
   out.gym = Object.assign({}, base.gym, raw.gym || {});
   out.settings = Object.assign({}, base.settings, raw.settings || {});
   out.plan = mergePlan(raw.plan);
+  // no breakfast any more, snacks split into merenda and pre nanna: move old diary lines
+  const OLD_SLOT = { colazione: 'pranzo', spuntini: 'merenda' };
+  Object.values(out.diary || {}).forEach((list) => { if (Array.isArray(list)) list.forEach((e) => { if (OLD_SLOT[e.slot]) e.slot = OLD_SLOT[e.slot]; }); });
   ['foods', 'diary', 'water'].forEach((k) => { if (!out[k] || typeof out[k] !== 'object' || Array.isArray(out[k])) out[k] = {}; });
   ['recent', 'meals', 'weights'].forEach((k) => { if (!Array.isArray(out[k])) out[k] = []; });
   if (!Array.isArray(out.gym.workouts)) out.gym.workouts = [];

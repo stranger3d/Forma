@@ -2,7 +2,7 @@
 
 App per iPhone (PWA) per alimentazione e palestra: calorie e macro del giorno, pasti salvati, peso con grafico e un registro allenamenti con timer di recupero.
 
-- **Oggi**: diario con colazione, pranzo, cena e spuntini. Alimenti da Open Food Facts (ricerca per nome e codice a barre), alimenti di base con valori medi, alimenti a mano. "Come ieri" e pasti salvati per fare prima.
+- **Oggi**: diario con pranzo, merenda, cena e pre nanna. Alimenti da Open Food Facts (ricerca per nome e codice a barre), alimenti di base con valori medi, alimenti a mano. "Come ieri" e pasti salvati per fare prima.
 - **Piano alimentare** (`plan.js`): giorni di allenamento, riposo e ricarica scelti ogni giorno, con obiettivi diversi; pasti del piano che riempiono il diario; tasto Sostituisci che propone alternative e ricalcola i grammi per avere calorie e macro uguali; ricarica ogni 2-4 settimane compensata nella settimana; acqua; consigli dal ritmo del peso.
 - **Peso**: pesate, media a 7 giorni, ritmo settimanale, peso obiettivo con stima dei tempi.
 - **Palestra** (`gym.js`): split con un gruppo muscolare per sessione (petto, schiena, gambe, spalle, braccia), prossimo gruppo e giorni di recupero; schede modificabili con superserie; sessione a tempo con orario di fine (05:45), stima di quando chiudi e avviso se sfori; recupero per blocco (1:30-2:30); carichi dell'ultima volta e suggerimento di quando salire di peso; scheda di ogni esercizio con muscoli ed esecuzione.

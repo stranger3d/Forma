@@ -193,14 +193,14 @@ function streakCard() {
     <div class="sk-week">${circles}</div></section>`;
 }
 // Peso: last 12 weeks, one square per day, columns are weeks
-function heatGrid(cell) {
+function heatGrid(cell, cls = 'heat') {
   const today = dkey(), start = addDays(weekStart(today), -77);
   let html = '';
   for (let w = 0; w < 12; w++) for (let d = 0; d < 7; d++) {
     const k = addDays(start, w * 7 + d);
     html += k > today ? '<i class="fut"></i>' : cell(k);
   }
-  return `<div class="heat">${html}</div>`;
+  return `<div class="${cls}">${html}</div>`;
 }
 function consistencyCard() {
   const today = dkey();
@@ -211,7 +211,8 @@ function consistencyCard() {
     <div class="cons-row"><span>Dieta in target</span><b>${pct}<small>%</small></b></div>
     ${heatGrid((k) => { const h = dayHit(k); return `<i class="${h ? 'hit' : h === false ? 'miss' : ''}"></i>`; })}
     <div class="cons-row"><span>Allenamenti</span><b>${sessions}</b></div>
-    ${heatGrid((k) => { const g = trainedOn(k); return g ? `<i class="gym g-${g}"></i>` : '<i></i>'; })}
+    ${heatGrid((k) => { const g = trainedOn(k); if (!g) return '<i></i>'; const n = state.gym.workouts.filter((w) => w.end && w.date === k).reduce((a, w) => a + w.ex.reduce((b, e) => b + e.sets.filter((s) => s.done).length, 0), 0); return `<i class="gym g-${g}" style="--s:${(0.45 + 0.55 * clamp(n / 20, 0, 1)).toFixed(2)}"></i>`; }, 'bub')}
+    <p class="hint">Più grande il cerchio, più serie quel giorno.</p>
     <p class="legend">${GROUPS.map((g) => `<span><i class="gdot g-${g.id}"></i>${g.name}</span>`).join(' ')}</p></section>`;
 }
 // short notes for the coach analysis card

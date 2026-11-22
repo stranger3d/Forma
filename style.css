@@ -634,3 +634,25 @@ body.has-timer #views { padding-bottom: calc(var(--tabh) + env(safe-area-inset-b
 .ai-notes li { position: relative; padding-left: 16px; }
 .ai-notes li::before { content: ""; position: absolute; left: 2px; top: .55em; width: 6px; height: 6px; border-radius: 50%; background: var(--accent-ink); }
 .ai-notes b { color: var(--text); font-weight: 650; }
+/* session time card: big countdown, band with three values, striped bar with a notch at the projected finish */
+.tc-hero { display: grid; justify-items: center; text-align: center; gap: 2px; }
+.tc-hero span { font-size: 13px; }
+.tc-hero b { font-size: 64px; font-weight: 750; letter-spacing: -.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.tc-hero b.late { color: var(--red); }
+.tc-band { display: grid; grid-template-columns: repeat(3, 1fr); padding: 10px 4px; border-radius: 16px; background: var(--card2); }
+.tc-band > div { display: grid; justify-items: center; gap: 1px; }
+.tc-band > div + div { border-left: 1px solid var(--line); }
+.tc-band b { font-size: 19px; font-variant-numeric: tabular-nums; }
+.tc-band b small { font-size: 13px; color: var(--muted); font-weight: 600; }
+.tc-band > div > small { font-size: 12px; color: var(--muted); }
+.tbar.stripes { height: 14px; border-radius: 8px; }
+.tbar.stripes i { background-color: var(--gc, var(--accent)); background-image: repeating-linear-gradient(115deg, rgba(255, 255, 255, .16) 0 6px, transparent 6px 12px); }
+.tbar.stripes.over i { background-color: var(--red); }
+.tbar.stripes em { top: -4px; height: 22px; width: 3px; border-radius: 2px; background: var(--text); }
+/* workout bubbles: size = sets done that day */
+.bub { display: grid; grid-template-rows: repeat(7, auto); grid-template-columns: repeat(12, 1fr); grid-auto-flow: column; gap: 3px; max-width: 300px; }
+.bub i { aspect-ratio: 1; display: grid; place-items: center; }
+.bub i::after { content: ""; width: 4px; height: 4px; border-radius: 50%; background: var(--line); }
+.bub i.gym::after { width: calc(var(--s) * 100%); height: calc(var(--s) * 100%); background: var(--gc); }
+:root[data-theme="dark"] .bub i.gym::after { box-shadow: 0 0 8px color-mix(in srgb, var(--gc) 50%, transparent); }
+.bub i.fut::after { background: none; }

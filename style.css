@@ -931,3 +931,43 @@ section.block { border-radius: 40px 40px 40px 16px; }
 .focus-nav .btn { border-radius: 99px; }
 @media (prefers-reduced-motion: reduce) { .g-blob { animation: none; } }
 .week-card { border-radius: 40px 40px 40px 14px; }
+
+/* ================= creative stage 3: weight and profile ================= */
+.w-card { background: none !important; box-shadow: none !important; padding: 8px 2px 4px; overflow: visible; isolation: isolate; }
+.w-card::before { content: ""; position: absolute; z-index: -1; width: 240px; height: 240px; left: -50px; top: -30px; border-radius: 50%; background: #8f6cf5; filter: blur(50px); opacity: .45; animation: floaty 10s ease-in-out infinite; }
+.w-card::after { content: ""; position: absolute; z-index: -1; width: 150px; height: 150px; right: -20px; top: 60px; border-radius: 50%; background: #c8ef5a; filter: blur(46px); opacity: .18; animation: floaty2 12s ease-in-out infinite; }
+:root[data-theme="light"] .w-card::before, :root[data-theme="light"] .w-card::after { opacity: .2; }
+.w-now .big { font-size: 84px; letter-spacing: -.05em; line-height: .95; }
+.w-now .big small { font-size: 24px; letter-spacing: 0; }
+.w-stats { background: none; padding: 0; gap: 10px; margin-top: 18px; align-items: center; }
+.w-stats > div { border: 0 !important; aspect-ratio: 1; border-radius: 50%; background: var(--card); display: grid; place-content: center; justify-items: center; max-width: 104px; width: 100%; justify-self: center; }
+.w-stats > div:nth-child(2) { transform: translateY(12px); background: color-mix(in srgb, var(--lime) 16%, var(--card)); }
+.w-stats > div:nth-child(3) { background: var(--accent-grad); color: var(--on-accent); }
+.w-stats > div:nth-child(3) span { color: inherit; opacity: .8; }
+.w-prog { margin-top: 26px; }
+.pbar { height: 22px; border-radius: 99px; }
+.w-goal { border-radius: 99px; text-align: center; padding: 12px 16px; }
+/* chart across the whole width, no card */
+.chart-card { background: none !important; box-shadow: none !important; margin: 4px -16px 12px; width: calc(100% + 32px); border-radius: 0; padding: 8px 16px; }
+.chart-card .seg { max-width: 260px; margin: 0 auto 10px; border-radius: 99px; }
+.chart-card .seg button { border-radius: 99px; }
+.chart .grid { stroke-dasharray: 2 5; }
+/* coach analysis and consistency as organic panels, dots instead of squares */
+.advice { border-radius: 48px 48px 48px 16px; padding: 20px; }
+.cons-card { border-radius: 16px 48px 48px 48px; }
+.heat i { border-radius: 50%; transform: scale(.82); }
+.heat i.hit { transform: scale(1); }
+/* profile */
+.targets { border-radius: 48px 48px 16px 48px; }
+:root[data-theme="dark"] .targets { background: radial-gradient(80% 70% at 100% 0%, rgba(150, 110, 255, .2), transparent 70%), var(--card); }
+.targets .big { font-size: 58px; }
+.tg-macros { gap: 10px; }
+.tg-macros > div { border: 0 !important; aspect-ratio: 1; border-radius: 50%; place-content: center; justify-items: center; text-align: center; }
+.tg-macros .p { background: color-mix(in srgb, var(--pc) 18%, var(--card2)); }
+.tg-macros .c { background: color-mix(in srgb, var(--cc) 18%, var(--card2)); transform: translateY(10px); }
+.tg-macros .f { background: color-mix(in srgb, var(--fc) 18%, var(--card2)); }
+.tg-macros b { font-size: 22px; }
+#v-profilo > .card:first-of-type { border-radius: 40px 40px 40px 14px; }
+#v-profilo .rows:nth-of-type(odd) { border-radius: 14px 40px 40px 40px; }
+#v-profilo .rows:nth-of-type(even) { border-radius: 40px 40px 14px 40px; }
+.plan-row { border-radius: 99px 40px 40px 99px; padding-left: 26px; }

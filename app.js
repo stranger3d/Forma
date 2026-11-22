@@ -981,6 +981,9 @@ function renderPeso() {
       const weeks = Math.abs(diff / tr);
       if (weeks < 260) { const d = new Date(Date.now() + weeks * 7 * 864e5); eta = ` · a questo ritmo verso ${MONTHS[d.getMonth()]} ${d.getFullYear()}`; }
     }
+    const startKg = first ? first.kg : cur;
+    const prog = Math.abs(startKg - p.target) > 0.05 ? clamp((startKg - cur) / (startKg - p.target), 0, 1) : (Math.abs(diff) <= 0.2 ? 1 : 0);
+    html += `<div class="w-prog"><div class="w-prog-top"><span>Verso l'obiettivo</span><b>${Math.round(prog * 100)}<small>%</small></b></div><div class="pbar"><i style="width:${(prog * 100).toFixed(1)}%"></i></div></div>`;
     html += `<button type="button" class="w-goal" data-act="w-target">${Math.abs(diff) <= 0.2 ? 'Obiettivo raggiunto' : `Mancano ${fmt1(Math.abs(diff))} kg a ${fmt1(p.target)}`}${esc(eta)}</button>`;
   }
   html += '</section>';
@@ -1354,7 +1357,7 @@ function applyTheme() {
   const light = t === 'light' || (t === 'auto' && matchMedia('(prefers-color-scheme: light)').matches);
   document.documentElement.dataset.theme = light ? 'light' : 'dark';
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.content = light ? '#f3f5f1' : '#0b0a0f';
+  if (meta) meta.content = light ? '#f5f3fa' : '#0b0a0f';
 }
 matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => { if (state.settings.theme === 'auto') applyTheme(); });
 
@@ -1378,7 +1381,7 @@ if (!state.profile.done) setTimeout(() => openProfileSheet(true), 400);
 // version is published it downloads in the background and the app reloads onto it
 // (never while you are typing in a field).
 // keep in step with VERSION in sw.js
-const APP_VERSION = '2026.11.22-16';
+const APP_VERSION = '2026.11.22-17';
 // drop the offline copy and load everything fresh from the site (data in localStorage stays)
 async function forceUpdate() {
   save();

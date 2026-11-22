@@ -386,6 +386,14 @@ function gauge(frac, size = 152, stroke = 12, n = 9) {
   return `<svg class="gauge" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" aria-hidden="true">
     <g class="g-bg" stroke-width="${stroke}">${bg}</g><g class="g-fg" stroke-width="${stroke}">${fg}</g></svg>`;
 }
+// kcal (outer, gradient) and protein / carbs / fat (inner) as concentric rings
+function rings(tot, t, size = 264) {
+  const c = size / 2;
+  const ring = (r, w, frac, cls) => `<circle cx="${c}" cy="${c}" r="${r}" class="rg-bg" stroke-width="${w}"/><circle cx="${c}" cy="${c}" r="${r}" class="rg ${cls}" stroke-width="${w}" pathLength="100" stroke-dasharray="100 100" stroke-dashoffset="${(100 - clamp(frac, 0, 1) * 100).toFixed(2)}" transform="rotate(-90 ${c} ${c})"/>`;
+  const f = (v, tg) => (tg > 0 ? v / tg : 0);
+  return `<svg class="rings-svg" viewBox="0 0 ${size} ${size}" aria-hidden="true"><defs><linearGradient id="kgrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" class="kg0"/><stop offset="1" class="kg1"/></linearGradient></defs>
+    ${ring(c - 12, 16, f(tot.kcal, t.kcal), 'k')}${ring(c - 34, 8, f(tot.p, t.p), 'p')}${ring(c - 47, 8, f(tot.c, t.c), 'c')}${ring(c - 60, 8, f(tot.f, t.f), 'f')}</svg>`;
+}
 function macroBar(label, val, target, cls) {
   const frac = target > 0 ? val / target : 0;
   const st = frac > 1.12 ? ' over' : frac > 1.05 ? ' near' : frac >= 0.92 ? ' hit' : '';
@@ -443,25 +451,22 @@ function renderOggi() {
   if (!state.profile.done) {
     html += `<button type="button" class="card setup-card" data-act="setup"><b>Imposta il tuo profilo</b><span>Sesso, età, altezza, peso e obiettivo: calcolo io calorie e macro.</span>${I.chev}</button>`;
   }
-  html += `<section class="card sum-card">
-      <div class="sum-main">
-        <div class="ring-box ${kcalState(tot.kcal, t.kcal)}">${gauge(t.kcal ? tot.kcal / t.kcal : 0)}
-          <div class="ring-center"><b class="big">${rollNum('kcal-' + day, fmt(Math.abs(left)))}</b><span>${over ? 'kcal oltre' : 'kcal rimaste'}</span></div></div>
-        <div class="sum-side">
-          <div><span>Obiettivo</span><b>${fmt(t.kcal)}</b></div>
-          <div><span>Mangiate</span><b>${fmt(tot.kcal)}</b></div>
-          ${t.type ? `<button type="button" class="goal-chip dt-${t.type}" data-act="plan-open">Piano · ${esc(DAY_TYPES[t.type].name)}</button>` : `<button type="button" class="goal-chip" data-act="tab-profilo">${esc(g.name)}${esc(paceTxt)}</button>`}
-        </div>
-      </div>
-      <div class="macros">${macroBar('Proteine', tot.p, t.p, 'p')}${macroBar('Carboidrati', tot.c, t.c, 'c')}${macroBar('Grassi', tot.f, t.f, 'f')}</div>
+  const mst = (v, tg) => { const f = tg > 0 ? v / tg : 0; return f > 1.12 ? 'over' : f > 1.05 ? 'near' : f >= 0.92 ? 'hit' : ''; };
+  const goalBtn = t.type ? `<button type="button" class="hp goal-chip dt-${t.type}" data-act="plan-open">Piano · ${esc(DAY_TYPES[t.type].name)}</button>` : `<button type="button" class="hp goal-chip" data-act="tab-profilo">${esc(g.name)}${esc(paceTxt)}</button>`;
+  html += `<section class="hero">
+      <i class="blob b1" aria-hidden="true"></i><i class="blob b2" aria-hidden="true"></i>
+      <div class="rings ${kcalState(tot.kcal, t.kcal)}">${rings(tot, t)}
+        <div class="rings-center"><small>${over ? 'kcal oltre' : 'kcal rimaste'}</small><b class="huge">${rollNum('kcal-' + day, fmt(Math.abs(left)))}</b><span>${fmt(tot.kcal)} di ${fmt(t.kcal)}</span></div></div>
+      <div class="hero-pills">${goalBtn}</div>
+      <div class="mac-legend">${[['p', 'Proteine', tot.p, t.p], ['c', 'Carboidrati', tot.c, t.c], ['f', 'Grassi', tot.f, t.f]].map(([k, l, v, tg]) => `<div class="ml ${k} ${mst(v, tg)}"><i></i><span>${l}</span><b>${fmt(v)}<small>/${fmt(tg)} g</small></b></div>`).join('')}</div>
     </section>`;
   html += planCard(day);
-  SLOTS.forEach((s) => {
+  SLOTS.forEach((s, sIdx) => {
     const items = list.filter((e) => e.slot === s.id);
     const st = sumVals(items);
     const yItems = yesterday.filter((e) => e.slot === s.id);
-    html += `<section class="card slot" data-slot="${s.id}">
-      <div class="slot-head"><h3>${s.name}</h3><span class="slot-kcal">${items.length ? fmt(st.kcal) + ' kcal' : ''}</span>
+    html += `<section class="card slot shape-${sIdx % 4}" data-slot="${s.id}">
+      <div class="slot-head"><h3>${s.name}</h3><span class="slot-kcal">${items.length ? `<b>${fmt(st.kcal)}</b><small>kcal</small>` : ''}</span>
         <button type="button" class="icon-btn sm" data-act="slot-menu" data-slot="${s.id}" aria-label="Altre azioni ${s.name}">${I.more}</button></div>`;
     if (items.length) {
       html += '<ul class="entries">' + items.map((e) => {
@@ -1381,7 +1386,7 @@ if (!state.profile.done) setTimeout(() => openProfileSheet(true), 400);
 // version is published it downloads in the background and the app reloads onto it
 // (never while you are typing in a field).
 // keep in step with VERSION in sw.js
-const APP_VERSION = '2026.11.22-17';
+const APP_VERSION = '2026.11.22-18';
 // drop the offline copy and load everything fresh from the site (data in localStorage stays)
 async function forceUpdate() {
   save();

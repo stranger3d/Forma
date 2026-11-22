@@ -194,7 +194,9 @@ body.has-timer #views { padding-bottom: calc(var(--tabh) + env(safe-area-inset-b
 .timer-txt b { font-size: 24px; font-variant-numeric: tabular-nums; }
 .timer-btn { height: 40px; min-width: 48px; padding: 0 10px; border-radius: 99px; background: var(--card2); font-weight: 650; font-variant-numeric: tabular-nums; }
 .timer-btn.x { min-width: 40px; color: var(--muted); }
-.timer.ended { background: var(--accent); color: var(--on-accent); border-color: transparent; animation: ping .5s var(--spring) 3; }
+.timer.ended { background: var(--accent); color: var(--on-accent); border-color: transparent; animation: breathe 1.6s ease-in-out 2; }
+/* end of rest: two slow breaths instead of a flash */
+@keyframes breathe { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 var(--accent-soft); } 50% { transform: scale(1.035); box-shadow: 0 0 0 10px var(--accent-soft); } }
 .timer.ended .timer-label { color: inherit; opacity: .75; }
 .timer.ended .timer-btn { background: rgba(0, 0, 0, .12); color: inherit; }
 @keyframes ping { 50% { transform: translateX(-50%) scale(1.04); } }
@@ -488,3 +490,17 @@ body.has-timer #views { padding-bottom: calc(var(--tabh) + env(safe-area-inset-b
 .hist-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; }
 .hist-row > span:first-child { display: grid; }
 .hist-row small { color: var(--muted); }
+
+/* ---------- small effects ---------- */
+.roll { position: relative; display: inline-block; overflow: hidden; vertical-align: bottom; }
+.roll-in { display: inline-block; animation: roll-in .42s var(--spring) both; }
+.roll-out { position: absolute; left: 0; top: 0; animation: roll-out .42s var(--spring) both; }
+@keyframes roll-in { from { transform: translateY(70%); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes roll-out { from { transform: none; opacity: 1; } to { transform: translateY(-70%); opacity: 0; } }
+/* water: the bar fills like a liquid, with a slow wave on its edge */
+.water .wbar { height: 10px; }
+.water .wbar { overflow: hidden; }
+.water .wbar i { position: relative; width: 0; transform: none; background: linear-gradient(90deg, rgba(124, 196, 255, .55), var(--pc)); transition: width .9s cubic-bezier(.34, 1.4, .5, 1); }
+.water .wave { position: absolute; right: -5px; top: 0; width: 12px; height: 100%; fill: var(--pc); animation: wave 1.8s ease-in-out infinite; }
+@keyframes wave { 0%, 100% { transform: scaleX(1) translateX(0); } 50% { transform: scaleX(.6) translateX(-2px); } }
+@media (prefers-reduced-motion: reduce) { .water .wave, .timer.ended { animation: none; } }

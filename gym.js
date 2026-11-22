@@ -368,7 +368,7 @@ function renderPalestra() {
     <div class="group-chips">${GROUPS.map((g) => { const s = groupStatus(g.id); return `<button type="button" data-group="${g.id}" class="${g.id === sel ? 'on' : ''} ${s.ready ? '' : 'resting'}"><b>${g.name}</b><small>${s.days == null ? 'mai fatto' : s.days === 0 ? 'oggi' : s.days === 1 ? 'ieri' : s.days + ' giorni fa'}</small></button>`; }).join('')}</div>
     ${st.ready ? '' : `<p class="hint warn-txt">${esc(GROUPS.find((g) => g.id === sel).name)} è ancora in recupero: ${st.left === 1 ? 'manca 1 giorno' : `mancano ${st.left} giorni`}.</p>`}
     <div class="tpl-list">${tpl.map((b, bi) => `<div class="tpl-block ${b.ex.length > 1 ? 'super' : ''}">${b.ex.length > 1 ? '<span class="tag">Superserie</span>' : ''}
-      ${b.ex.map((e) => { const nm = pickVariant(e, sel); return `<button type="button" class="tpl-ex" data-info="${esc(nm)}"><span>${esc(nm)}${e.alt ? `<small class="alt">alterna con ${esc(nm === e.name ? e.alt : e.name)}</small>` : ''}</span><small>${wk.deload ? deloadSets(e.sets) : e.sets}×${esc(e.reps)}</small></button>`; }).join('')}
+      ${b.ex.map((e) => { const nm = pickVariant(e, sel); return `<button type="button" class="tpl-ex" data-info="${esc(b.ex.length > 1 ? b.ex.map((x) => pickVariant(x, sel)).join('|') : nm)}"><span>${esc(nm)}${e.alt ? `<small class="alt">alterna con ${esc(nm === e.name ? e.alt : e.name)}</small>` : ''}</span><small>${wk.deload ? deloadSets(e.sets) : e.sets}×${esc(e.reps)}</small></button>`; }).join('')}
       <small class="muted tpl-rest">recupero ${clock(b.rest)}</small></div>`).join('') || '<p class="empty">Scheda vuota: aggiungi esercizi.</p>'}</div>
     ${alerts.map((a) => `<p class="coach-alert ${a.tone}">${esc(a.text)}</p>`).join('')}
     <div class="tpl-time ${fits ? '' : 'over'}"><span>≈ ${Math.round(sec / 60)} min</span><span>${fits ? `finisci verso le ${hhmm(Date.now() + sec * 1000)}` : `sfori di ${Math.ceil((Date.now() + sec * 1000 - endAt) / 60000)} min rispetto alle ${hhmm(endAt)}`}</span></div>
@@ -401,7 +401,8 @@ function renderSession(w) {
     html += `<section class="card block ${sup ? 'super' : ''} ${bDone ? 'bdone' : ''} ${nx && nx.bi === bi ? 'current' : ''}" data-bi="${bi}">
       <div class="block-head"><span class="tag">${sup ? 'Superserie' : 'Esercizio'} ${bi + 1}</span>
         <button type="button" class="rest-chip" data-g="rest" data-bi="${bi}">${I.timer}<span>${clock(b.rest)}</span></button>
-        <button type="button" class="icon-btn sm" data-g="block-menu" data-bi="${bi}" aria-label="Altre azioni">${I.more}</button></div>`;
+        <button type="button" class="icon-btn sm" data-g="block-menu" data-bi="${bi}" aria-label="Altre azioni">${I.more}</button></div>
+      <button type="button" class="block-anims ${sup ? 'two' : ''}" data-info="${esc(b.ex.map((i) => w.ex[i].name).join('|'))}" aria-label="Come si fa">${b.ex.map((i, k) => `<span class="ba">${exerciseAnim(w.ex[i].name, 'sm') || '<span class="ba-none"></span>'}${sup ? `<small>${String.fromCharCode(65 + bi)}${k + 1}</small>` : ''}</span>`).join('')}</button>`;
     b.ex.forEach((ei, k) => {
       const e = w.ex[ei];
       const info = exInfo(e.name);
@@ -436,6 +437,7 @@ function renderSession(w) {
   html += `<button type="button" class="add-btn big-add" data-g="ex-add">${I.plus}<span>Aggiungi esercizio</span></button>`;
   html += `<p class="foot">${doneSets} serie fatte · ${fmt(volume(w))} kg di volume</p>`;
   $('v-palestra').innerHTML = html;
+  startAnims($('v-palestra'));
 }
 function timeCardInner(w) {
   const now = Date.now();
@@ -462,7 +464,20 @@ function gymTick() {
 }
 
 // ---------- exercise info (how to, muscles; animation comes from anim.js when present) ----------
-function openExerciseInfo(name) {
+// names: one exercise, or 'A|B' for a superset shown side by side
+function openExerciseInfo(names) {
+  const list = String(names).split('|').filter(Boolean);
+  if (list.length > 1) {
+    openSheet({
+      title: 'Superserie', cls: 'tall',
+      body: `<p class="hint first-hint">Fai una serie del primo e subito una del secondo, poi recupera.</p><div class="ss-info">${list.map((n, i) => { const inf = exInfo(n); return `<div class="ss-col"><span class="ss-n">${String.fromCharCode(65)}${i + 1}</span>
+        ${typeof exerciseAnim === 'function' ? exerciseAnim(n, 'sm') : ''}<b>${esc(n)}</b>
+        ${inf.muscles ? `<small class="ex-muscles">${esc(inf.muscles)}</small>` : ''}${inf.how ? `<p class="ex-how sm">${esc(inf.how)}</p>` : ''}</div>`; }).join('')}</div>`,
+      onMount(el) { if (typeof startAnims === 'function') startAnims(el); },
+    });
+    return;
+  }
+  const name = list[0];
   const info = exInfo(name);
   const last = lastSets(name);
   openSheet({

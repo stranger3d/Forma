@@ -366,8 +366,8 @@ function renderPalestra() {
     <span class="wk-dots">${Array.from({ length: wk.len }, (_, i) => `<i class="${i < wk.i ? 'past' : i === wk.i ? 'now' : ''}"></i>`).join('')}</span></button>`;
   const nEx = tpl.reduce((a, b) => a + b.ex.length, 0);
   html += `<div class="group-chips">${GROUPS.map((g) => { const s = groupStatus(g.id); return `<button type="button" data-group="${g.id}" class="g-${g.id} ${g.id === sel ? 'on' : ''} ${s.ready ? '' : 'resting'}"><i class="gdot"></i><b>${g.name}</b><small>${s.days == null ? 'mai' : s.days === 0 ? 'oggi' : s.days === 1 ? 'ieri' : s.days + ' gg'}</small></button>`; }).join('')}</div>`;
-  html += `<section class="card split-card g-${sel}"><div class="tpl-hero"><small>${sel === nextGroup() ? 'Prossimo allenamento' : 'Allenamento scelto'}</small><b>${esc(GROUPS.find((g) => g.id === sel).name)}</b>
-      <div class="tpl-meta"><span><b>${Math.round(sec / 60)}</b> min</span><span><b>${nEx}</b> esercizi</span><span><b>${wk.deload ? 'scarico' : 'RIR ' + wk.rir}</b></span></div></div>
+  html += `<section class="split-card g-${sel}"><div class="tpl-hero"><div class="g-blob"><small>${sel === nextGroup() ? 'Prossimo allenamento' : 'Allenamento scelto'}</small><b>${esc(GROUPS.find((g) => g.id === sel).name)}</b></div>
+      <div class="tpl-meta"><span class="m1"><b>${Math.round(sec / 60)}</b><small>min</small></span><span class="m2"><b>${nEx}</b><small>esercizi</small></span><span class="m3"><b>${wk.deload ? '−15%' : wk.rir}</b><small>${wk.deload ? 'scarico' : 'RIR'}</small></span></div></div>
     ${st.ready ? '' : `<p class="hint warn-txt">${esc(GROUPS.find((g) => g.id === sel).name)} è ancora in recupero: ${st.left === 1 ? 'manca 1 giorno' : `mancano ${st.left} giorni`}.</p>`}
     <div class="tpl-list">${tpl.map((b, bi) => `<div class="tpl-block ${b.ex.length > 1 ? 'super' : ''}">${b.ex.length > 1 ? '<span class="tag">Superserie</span>' : ''}
       ${b.ex.map((e) => { const nm = pickVariant(e, sel); return `<button type="button" class="tpl-ex" data-info="${esc(b.ex.length > 1 ? b.ex.map((x) => pickVariant(x, sel)).join('|') : nm)}"><span class="tpl-thumb">${typeof exerciseAnim === 'function' ? exerciseAnim(nm, 'xs') : ''}</span><span class="tpl-name">${esc(nm)}${e.alt ? `<small class="alt">alterna con ${esc(nm === e.name ? e.alt : e.name)}</small>` : ''}</span><small>${wk.deload ? deloadSets(e.sets) : e.sets}×${esc(e.reps)}</small></button>`; }).join('')}
@@ -466,7 +466,9 @@ function timeCardInner(w) {
   const over = Math.ceil((finish - w.deadline) / 60000);
   const frac = clamp(el / total, 0, 1);
   const all = w.ex.reduce((a, e) => a + e.sets.length, 0), done = w.ex.reduce((a, e) => a + e.sets.filter((s) => s.done).length, 0);
-  return `<div class="tc-hero"><span class="muted">Tempo rimasto · fine entro le ${hhmm(w.deadline)}</span><b id="wo-clock" class="${left < 0 ? 'late' : ''}">${left >= 0 ? clock(left) : '−' + clock(-left)}</b></div>
+  const R = 104, C = 2 * Math.PI * R;
+  return `<div class="tc-hero"><div class="tc-ring ${over > 0 ? 'over' : ''}"><svg viewBox="0 0 240 240" aria-hidden="true"><circle cx="120" cy="120" r="${R}" class="tcr-bg"/><circle cx="120" cy="120" r="${R}" class="tcr-fg" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * frac).toFixed(1)}" transform="rotate(-90 120 120)"/></svg>
+      <div class="tc-in"><small>tempo rimasto</small><b id="wo-clock" class="${left < 0 ? 'late' : ''}">${left >= 0 ? clock(left) : '−' + clock(-left)}</b><span>fine entro le ${hhmm(w.deadline)}</span></div></div></div>
     <div class="tc-band"><div><b>${clock(el)}</b><small>trascorso</small></div><div><b>${done}<small>/${all}</small></b><small>serie</small></div><div><b>${rem > 0 ? hhmm(finish) : '✓'}</b><small>${rem > 0 ? 'chiudi verso' : 'scheda finita'}</small></div></div>
     <div class="tbar stripes ${over > 0 ? 'over' : ''}"><i style="transform:scaleX(${frac})"></i><em style="left:${clamp(((finish - w.start) / 1000) / total, 0, 1) * 100}%"></em></div>
     ${over > 0 ? `<p class="tc-warn">Sfori di ${over} min: ${over > 4 ? 'salta l\'ultimo blocco o togli una serie agli isolamenti' : 'accorcia di poco i recuperi'}.</p>` : `<p class="tc-ok">In tempo${rem > 0 ? `, ${Math.max(0, Math.floor((w.deadline - finish) / 60000))} min di margine` : ''}.</p>`}`;

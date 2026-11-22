@@ -436,3 +436,22 @@ body.has-timer #views { padding-bottom: calc(var(--tabh) + env(safe-area-inset-b
 .te-ex .mini-in input { width: 2.5ch; }
 .te-ex .mini-in.wide input { width: 5ch; }
 .te-actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 6px; font-size: 14px; }
+
+/* ---------- exercise animations ---------- */
+.ex-anim { margin: 0 0 14px; border-radius: 18px; background: var(--card); overflow: hidden; }
+.ex-anim svg { display: block; width: 100%; height: auto; max-height: 240px; }
+.ex-anim .fg { fill: none; stroke: var(--text); stroke-width: 5.5; stroke-linecap: round; stroke-linejoin: round; }
+.ex-anim .fg.far { opacity: .32; }
+.ex-anim .fg.torso { stroke-width: 5.5; }
+.ex-anim .head { fill: var(--text); }
+.ex-anim .eq { fill: var(--accent-ink); stroke: var(--accent-ink); stroke-width: 3; stroke-linecap: round; }
+.ex-anim .eq.db { stroke-width: 6; }
+.ex-anim .eq.bar { stroke-width: 4; }
+.ex-anim .cable { stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 3 3; }
+.ex-anim .pulley { fill: var(--card2); stroke: var(--muted); stroke-width: 1.5; }
+.ex-anim .prop { stroke: var(--line); stroke-width: 3; stroke-linecap: round; }
+.ex-anim .prop.thick { stroke: var(--card2); stroke-width: 9; }
+:root[data-theme="dark"] .ex-anim .prop.thick { stroke: #353a42; }
+.ex-anim .prop-fill { fill: var(--card2); }
+:root[data-theme="dark"] .ex-anim .prop-fill { fill: #353a42; }
+.ex-anim .ground { stroke: var(--line); stroke-width: 2; }

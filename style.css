@@ -504,3 +504,8 @@ body.has-timer #views { padding-bottom: calc(var(--tabh) + env(safe-area-inset-b
 .water .wave { position: absolute; right: -5px; top: 0; width: 12px; height: 100%; fill: var(--pc); animation: wave 1.8s ease-in-out infinite; }
 @keyframes wave { 0%, 100% { transform: scaleX(1) translateX(0); } 50% { transform: scaleX(.6) translateX(-2px); } }
 @media (prefers-reduced-motion: reduce) { .water .wave, .timer.ended { animation: none; } }
+
+/* barcode scan: always visible next to Aggiungi and in the add sheet */
+.add-btn.scan-btn { background: var(--card2); color: var(--text); }
+.scan-wide { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin: 10px 0 4px; padding: 12px; border-radius: 14px; background: var(--accent-soft); color: var(--accent-ink); font-weight: 650; }
+.search-row:has(input:not(:placeholder-shown)) + .scan-wide { display: none; }

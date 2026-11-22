@@ -413,6 +413,7 @@ function renderOggi() {
       }).join('') + '</ul>';
     }
     html += `<div class="slot-actions"><button type="button" class="add-btn" data-act="add" data-slot="${s.id}">${I.plus}<span>Aggiungi</span></button>
+      <button type="button" class="add-btn scan-btn" data-act="scan" data-slot="${s.id}">${I.scan}<span>Scansiona</span></button>
       ${!items.length && t.type && planSlotKcal(day, s.id) > 0 ? `<button type="button" class="ghost-btn" data-act="slot-plan" data-slot="${s.id}">Dal piano · ${fmt(planSlotKcal(day, s.id))} kcal</button>` : ''}
       ${!items.length && yItems.length ? `<button type="button" class="ghost-btn" data-act="copy-yday" data-slot="${s.id}">Come ieri · ${fmt(sumVals(yItems).kcal)} kcal</button>` : ''}</div>
       </section>`;
@@ -430,6 +431,7 @@ $('v-oggi').addEventListener('click', (ev) => {
   else if (act === 'setup') openProfileSheet(true);
   else if (act === 'tab-profilo') showTab('profilo');
   else if (act === 'add') openAddSheet(b.dataset.slot);
+  else if (act === 'scan') { const slot = b.dataset.slot; openScanner((code) => onScan(code, slot, null)); }
   else if (act === 'entry') { const e = dayEntries().find((x) => x.id === b.dataset.id); if (e) openQtySheet({ entry: e }); }
   else if (act === 'copy-yday') copySlot(addDays(day, -1), b.dataset.slot);
   else if (act === 'slot-menu') openSlotMenu(b.dataset.slot);
@@ -511,8 +513,8 @@ function openAddSheet(slot) {
   sh = openSheet({
     title: 'Aggiungi a ' + SLOTS.find((s) => s.id === slot).name.toLowerCase(),
     cls: 'tall',
-    body: `<div class="search-row"><input type="search" id="add-q" placeholder="Cerca un alimento" autocomplete="off" enterkeyhint="search">
-        <button type="button" class="square-btn" id="add-scan" aria-label="Scansiona codice a barre">${I.scan}</button></div>
+    body: `<div class="search-row"><input type="search" id="add-q" placeholder="Cerca un alimento" autocomplete="off" enterkeyhint="search"></div>
+      <button type="button" class="scan-wide" id="add-scan2">${I.scan}<span>Scansiona il codice a barre</span></button>
       <div class="seg" id="add-seg"><button type="button" data-mode="recenti" class="on">Recenti</button><button type="button" data-mode="miei">Alimenti</button><button type="button" data-mode="pasti">Pasti</button></div>
       <div id="add-list" class="pick-list"></div>
       <button type="button" class="ghost-btn wide" id="add-new">${I.plus}<span>Nuovo alimento a mano</span></button>`,
@@ -532,7 +534,7 @@ function openAddSheet(slot) {
         el.querySelectorAll('#add-seg button').forEach((x) => x.classList.toggle('on', x === b));
         draw();
       });
-      el.querySelector('#add-scan').addEventListener('click', () => openScanner((code) => onScan(code, slot, sh)));
+      el.querySelector('#add-scan2').addEventListener('click', () => openScanner((code) => onScan(code, slot, sh)));
       el.querySelector('#add-new').addEventListener('click', () => openFoodEditor(null, (f) => openQtySheet({ food: f, slot, after: () => sh.close() }), q));
       el.querySelector('#add-list').addEventListener('click', (e) => {
         const b = e.target.closest('[data-pick]'); if (!b) return;

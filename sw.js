@@ -3,7 +3,7 @@
 // RELEASE RULE: change VERSION every time any app file changes. The browser
 // notices that sw.js is different, downloads the new files into a fresh cache
 // and the page reloads onto them. Old caches are deleted.
-const VERSION = '2026.11.22-17';
+const VERSION = '2026.11.22-18';
 const CACHE = 'forma-' + VERSION;
 const ASSETS = [
   './', 'index.html', 'style.css', 'app.js', 'foods.js', 'plan.js', 'gym.js', 'coach.js', 'anim.js', 'manifest.webmanifest',

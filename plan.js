@@ -405,10 +405,9 @@ function planCard(k) {
   if (isToday && rs.due) html += `<button type="button" class="refeed-due" data-act="refeed-today"><b>Ricarica consigliata</b><span>${rs.deload ? 'Settimana di scarico in palestra: è il momento giusto. ' : ''}${rs.last ? `Sono passati ${rs.since} giorni dall'ultima.` : `Piano iniziato da ${rs.since} giorni.`} Tocca per fare oggi la ricarica.</span></button>`;
   html += `<div class="plan-actions">${missing.length ? `<button type="button" class="btn primary sm" data-act="plan-fill">Riempi dal piano · ${fmt(sumVals(missing.flatMap((m) => m.items)).kcal)} kcal</button>` : '<span class="muted small">Pasti del piano già nel diario</span>'}
       <button type="button" class="pill-btn" data-act="plan-open">Piano</button></div>
-    <div class="water"><span>Acqua <b>${fmt1(water / 1000)}</b> / ${fmt1(wT / 1000)} L</span>
-      <div class="wbar"><i style="width:${clamp(water / wT, 0, 1) * 100}%"><svg class="wave" viewBox="0 0 40 10" preserveAspectRatio="none" aria-hidden="true"><path d="M0 5 Q5 1 10 5 T20 5 T30 5 T40 5 V10 H0 Z"/></svg></i></div>
-      <button type="button" class="icon-btn sm" data-act="water-" aria-label="Togli un bicchiere">−</button>
-      <button type="button" class="icon-btn sm plus" data-act="water+" aria-label="Aggiungi un bicchiere">+</button></div>
+    <div class="wbub-row"><button type="button" class="wbub-btn" data-act="water-" aria-label="Togli un bicchiere">−</button>
+      <div class="wbub" style="--lv:${(clamp(water / wT, 0, 1) * 100).toFixed(1)}%"><i class="wfill"><svg class="wave" viewBox="0 0 120 12" preserveAspectRatio="none" aria-hidden="true"><path d="M0 6 Q15 0 30 6 T60 6 T90 6 T120 6 V12 H0 Z"/></svg></i><span class="wtxt"><small>Acqua</small><b>${fmt1(water / 1000)}</b><small>di ${fmt1(wT / 1000)} L</small></span></div>
+      <button type="button" class="wbub-btn plus" data-act="water+" aria-label="Aggiungi un bicchiere">+</button></div>
   </section>`;
   return html;
 }

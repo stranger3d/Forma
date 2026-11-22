@@ -379,3 +379,60 @@ body.has-timer #views { padding-bottom: calc(var(--tabh) + env(safe-area-inset-b
 .advice .btn { margin-top: 12px; }
 .plan-row { position: relative; display: grid; gap: 4px; width: 100%; text-align: left; padding-right: 40px; }
 .plan-row span { color: var(--muted); font-size: 14px; }
+
+/* ---------- gym: split and timed sessions ---------- */
+.group-chips { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.group-chips button { display: grid; gap: 2px; padding: 10px 2px; border-radius: 14px; background: var(--card2); text-align: center; }
+.group-chips b { font-size: 14px; }
+.group-chips small { font-size: 11px; color: var(--muted); }
+.group-chips button.resting b { color: var(--muted); }
+.group-chips button.on { background: var(--accent); color: var(--on-accent); }
+.group-chips button.on small, .group-chips button.on b { color: var(--on-accent); }
+.warn-txt { color: var(--cc); }
+.tpl-list { display: grid; gap: 8px; margin-top: 14px; }
+.tpl-block { position: relative; display: grid; gap: 2px; padding: 8px 12px; border-radius: 14px; background: var(--card2); }
+.tpl-block.super { border-left: 3px solid var(--accent); }
+.tag { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--accent-ink); }
+.tpl-ex { display: flex; justify-content: space-between; gap: 10px; width: 100%; text-align: left; padding: 3px 0; font-weight: 600; }
+.tpl-ex small { color: var(--muted); font-variant-numeric: tabular-nums; }
+.tpl-rest { font-size: 12px; }
+.tpl-time { display: flex; justify-content: space-between; margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: var(--accent-soft); font-weight: 650; font-size: 15px; }
+.tpl-time.over { background: rgba(255, 198, 92, .16); color: var(--cc); }
+.start-card.free { border: 0; background: var(--card); }
+.time-card { display: grid; gap: 10px; }
+.tc-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; }
+.tc-top > div:first-child { display: grid; }
+.tc-side { display: grid; text-align: right; font-size: 14px; color: var(--muted); gap: 2px; }
+.tc-side b { color: var(--text); font-variant-numeric: tabular-nums; }
+.tbar { position: relative; height: 8px; border-radius: 9px; background: var(--card2); }
+.tbar i { position: absolute; inset: 0; border-radius: inherit; background: var(--accent); transform-origin: left; transition: transform 1s linear; }
+.tbar.over i { background: var(--cc); }
+.tbar em { position: absolute; top: -4px; width: 3px; height: 16px; margin-left: -1.5px; border-radius: 2px; background: var(--text); opacity: .8; }
+.tc-warn, .tc-ok { margin: 0; font-size: 14px; font-weight: 600; }
+.tc-warn { color: var(--cc); }
+.tc-ok { color: var(--muted); }
+.block { display: grid; gap: 12px; }
+.block.super { border-left: 3px solid var(--accent); }
+.block.current { box-shadow: 0 0 0 1.5px var(--accent) inset; }
+.block.bdone { opacity: .6; }
+.block-head { display: flex; align-items: center; gap: 8px; }
+.block-head .tag { flex: 1; }
+.rest-chip { display: inline-flex; align-items: center; gap: 4px; padding: 6px 10px; border-radius: 99px; background: var(--card2); font-size: 14px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.block .ex + .ex { padding-top: 12px; border-top: 1px solid var(--line); }
+.ss-n { display: inline-block; min-width: 26px; padding: 1px 5px; border-radius: 7px; background: var(--accent-soft); color: var(--accent-ink); font-size: 13px; text-align: center; vertical-align: 2px; }
+.prog { color: var(--muted); }
+.prog.up { color: var(--down); font-weight: 650; }
+.info-btn { font-weight: 700; font-style: italic; font-family: Georgia, serif; font-size: 17px; background: var(--card2); }
+.set-row.cur .set-n { background: var(--accent); color: var(--on-accent); }
+.ex-muscles { margin: 0; font-weight: 600; }
+.ex-how { margin: 0; line-height: 1.5; }
+.te-block { margin-top: 12px; padding: 10px 12px; border-radius: 16px; background: var(--card); }
+.te-block.super { border-left: 3px solid var(--accent); }
+.te-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.te-rest { flex: 0 0 170px; }
+.te-ex { display: flex; align-items: center; gap: 6px; padding: 5px 0; }
+.te-name { flex: 1; min-width: 0; text-align: left; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.te-ex .mini-in { background: var(--card2); padding: 0 6px; }
+.te-ex .mini-in input { width: 2.5ch; }
+.te-ex .mini-in.wide input { width: 5ch; }
+.te-actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 6px; font-size: 14px; }

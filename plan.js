@@ -394,7 +394,7 @@ function planCard(k) {
   html += `<div class="plan-actions">${missing.length ? `<button type="button" class="btn primary sm" data-act="plan-fill">Riempi dal piano · ${fmt(sumVals(missing.flatMap((m) => m.items)).kcal)} kcal</button>` : '<span class="muted small">Pasti del piano già nel diario</span>'}
       <button type="button" class="pill-btn" data-act="plan-open">Piano</button></div>
     <div class="water"><span>Acqua <b>${fmt1(water / 1000)}</b> / ${fmt1(wT / 1000)} L</span>
-      <div class="wbar"><i style="transform:scaleX(${clamp(water / wT, 0, 1)})"></i></div>
+      <div class="wbar"><i style="width:${clamp(water / wT, 0, 1) * 100}%"><svg class="wave" viewBox="0 0 40 10" preserveAspectRatio="none" aria-hidden="true"><path d="M0 5 Q5 1 10 5 T20 5 T30 5 T40 5 V10 H0 Z"/></svg></i></div>
       <button type="button" class="icon-btn sm" data-act="water-" aria-label="Togli un bicchiere">−</button>
       <button type="button" class="icon-btn sm plus" data-act="water+" aria-label="Aggiungi un bicchiere">+</button></div>
   </section>`;

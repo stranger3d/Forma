@@ -341,6 +341,24 @@ const I = {
   timer: '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M9 1h6v2H9zm3 4a8 8 0 1 1 0 16 8 8 0 0 1 0-16zm0 2a6 6 0 1 0 0 12 6 6 0 0 0 0-12zm1 2v4.4l3 1.8-1 1.7-4-2.4V9z"/></svg>',
 };
 
+// numbers that change roll: the old digits go up and fade, the new ones come from below
+// (only the digits that changed move)
+const rollLast = {};
+function rollNum(key, txt) {
+  const prev = rollLast[key];
+  rollLast[key] = txt;
+  if (prev == null || prev === txt || matchMedia('(prefers-reduced-motion: reduce)').matches) return esc(txt);
+  const a = String(prev), b = String(txt);
+  const pa = a.padStart(b.length, ' '), pb = b.padStart(a.length, ' ');
+  let out = '';
+  for (let i = 0; i < pb.length; i++) {
+    const n = pb[i], o = pa[i] != null ? pa[i] : ' ';
+    if (n === o || !/\d/.test(n + o)) { if (n !== ' ') out += esc(n); continue; }
+    out += `<span class="roll"><span class="roll-in">${esc(n.trim())}</span>${o.trim() ? `<span class="roll-out" aria-hidden="true">${esc(o)}</span>` : ''}</span>`;
+  }
+  return out;
+}
+
 // ================= OGGI: daily diary =================
 let day = dkey();
 function dayEntries(k = day) { return state.diary[k] || []; }
@@ -365,7 +383,7 @@ function renderOggi() {
   html += `<section class="card sum-card">
       <div class="sum-main">
         <div class="ring-box ${over ? 'over' : ''}">${ring(t.kcal ? tot.kcal / t.kcal : 0, 152, 14, 'kcal-ring')}
-          <div class="ring-center"><b class="big">${fmt(Math.abs(left))}</b><span>${over ? 'kcal oltre' : 'kcal rimaste'}</span></div></div>
+          <div class="ring-center"><b class="big">${rollNum('kcal-' + day, fmt(Math.abs(left)))}</b><span>${over ? 'kcal oltre' : 'kcal rimaste'}</span></div></div>
         <div class="sum-side">
           <div><span>Obiettivo</span><b>${fmt(t.kcal)}</b></div>
           <div><span>Mangiate</span><b>${fmt(tot.kcal)}</b></div>
@@ -1029,7 +1047,7 @@ function runTimer() {
         timerEndedAt = Date.now();
         el.classList.add('ended');
         $('timer-label').textContent = 'Recupero finito';
-        $('timer-val').textContent = 'Vai!';
+        $('timer-val').textContent = 'Vai!'; $('timer-val').dataset.v = '';
         arc.style.strokeDashoffset = '0px';
         if (Date.now() - state.timer.end < 5000) { haptic(3); beep(); }
       }
@@ -1038,7 +1056,8 @@ function runTimer() {
     }
     el.classList.remove('ended');
     $('timer-label').textContent = 'Recupero';
-    $('timer-val').textContent = clock(Math.ceil(left));
+    const tv = clock(Math.ceil(left));
+    if ($('timer-val').dataset.v !== tv) { $('timer-val').dataset.v = tv; $('timer-val').innerHTML = rollNum('timer', tv); }
     arc.style.strokeDashoffset = `${C * (1 - left / state.timer.dur)}px`;
   };
   step();

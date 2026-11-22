@@ -397,8 +397,8 @@ function planCard(k) {
   const have = new Set(dayEntries(k).map((e) => e.slot));
   const missing = planMeals(type, k).filter((m) => !have.has(m.slot));
   const water = waterOf(k), wT = state.plan.water;
-  let html = `<section class="card plan-card">
-    <div class="seg day-seg" id="day-seg">${Object.entries(DAY_TYPES).map(([id, d]) => `<button type="button" data-daytype="${id}" class="${type === id ? 'on' : ''}">${d.name}</button>`).join('')}</div>
+  let html = `<section class="card plan-card dt-${type}">
+    <div class="seg day-seg" id="day-seg">${Object.entries(DAY_TYPES).map(([id, d]) => `<button type="button" data-daytype="${id}" class="dt-${id} ${type === id ? 'on' : ''}">${d.name}</button>`).join('')}</div>
     <p class="hint">${t.auto ? (type === 'on' ? 'Scelto in automatico: oggi hai un allenamento. ' : 'Scelto in automatico. Tocca per cambiare. ') : ''}${type === 'refeed' ? `Ricarica: +${fmt(refeedKcal())} kcal da carboidrati, grassi un po' più bassi.` : ''}${t.cut ? `Questa settimana c'è una ricarica: −${fmt(t.cut)} kcal oggi per tenere in pari la media.` : ''}</p>`;
   if (isToday && rs.due) html += `<button type="button" class="refeed-due" data-act="refeed-today"><b>Ricarica consigliata</b><span>${rs.deload ? 'Settimana di scarico in palestra: è il momento giusto. ' : ''}${rs.last ? `Sono passati ${rs.since} giorni dall'ultima.` : `Piano iniziato da ${rs.since} giorni.`} Tocca per fare oggi la ricarica.</span></button>`;
   html += `<div class="plan-actions">${missing.length ? `<button type="button" class="btn primary sm" data-act="plan-fill">Riempi dal piano · ${fmt(sumVals(missing.flatMap((m) => m.items)).kcal)} kcal</button>` : '<span class="muted small">Pasti del piano già nel diario</span>'}

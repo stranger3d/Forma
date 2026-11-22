@@ -135,10 +135,10 @@ function openProgress() {
   const sh = openSheet({
     title: 'Progressi', cls: 'tall',
     body: `<p class="list-label first">Serie allenanti negli ultimi 7 giorni</p>
-      <div class="vol">${GROUPS.map((g) => { const v = vol[g.id]; const st = v < VOL_RANGE[0] ? 'low' : v > VOL_RANGE[1] ? 'high' : 'ok'; return `<div class="vol-row ${st}"><span>${g.name}</span><div class="vbar"><i style="transform:scaleX(${clamp(v / 24, 0, 1)})"></i><em style="left:${(VOL_RANGE[0] / 24) * 100}%"></em><em style="left:${(VOL_RANGE[1] / 24) * 100}%"></em></div><b>${v}</b></div>`; }).join('')}</div>
+      <div class="vol">${GROUPS.map((g) => { const v = vol[g.id]; const st = v < VOL_RANGE[0] ? 'low' : v > VOL_RANGE[1] ? 'high' : 'ok'; return `<div class="vol-row g-${g.id} ${st}"><span><i class="gdot"></i>${g.name}</span><div class="vbar"><i style="transform:scaleX(${clamp(v / 24, 0, 1)})"></i><em style="left:${(VOL_RANGE[0] / 24) * 100}%"></em><em style="left:${(VOL_RANGE[1] / 24) * 100}%"></em></div><b>${v}</b></div>`; }).join('')}</div>
       <p class="hint">Zona utile 10-20 serie a settimana per gruppo. Con un gruppo ogni 5 giorni sei nella parte bassa: va bene in definizione, conta di più la qualità delle serie.</p>
       <p class="list-label">Record (massimale stimato)</p>
-      <div class="pick-list">${rows.map((r) => { const best = Math.max(...r.h.map((x) => x.e1rm)); const last = r.h[r.h.length - 1]; return `<button type="button" class="pick" data-ex="${esc(r.n)}"><span class="pk-name">${esc(r.n)}<small>ultima: ${esc(setsText(last.sets))}${stalled(r.n) ? ' · ferma' : ''}</small></span>${sparkline(r.h.map((x) => x.e1rm))}<span class="pk-meta">${best > 0 ? fmt1(best) + ' kg' : '–'}<small>1RM stimato</small></span></button>`; }).join('') || '<p class="empty">Allenati e segna le serie: qui vedi record e andamento dei carichi.</p>'}</div>`,
+      <div class="pick-list">${rows.map((r) => { const best = Math.max(...r.h.map((x) => x.e1rm)); const last = r.h[r.h.length - 1]; return `<button type="button" class="pick g-${exInfo(r.n).group}" data-ex="${esc(r.n)}"><span class="pk-name">${esc(r.n)}<small>ultima: ${esc(setsText(last.sets))}${stalled(r.n) ? ' · ferma' : ''}</small></span>${sparkline(r.h.map((x) => x.e1rm))}<span class="pk-meta rec-best">${best > 0 ? fmt1(best) + ' kg' : '–'}<small>1RM stimato</small></span></button>`; }).join('') || '<p class="empty">Allenati e segna le serie: qui vedi record e andamento dei carichi.</p>'}</div>`,
     onMount(el) {
       el.addEventListener('click', (e) => { const b = e.target.closest('[data-ex]'); if (b) openExerciseHistory(b.dataset.ex); });
     },
@@ -150,7 +150,7 @@ function openExerciseHistory(name) {
   const best = Math.max(0, ...h.map((x) => x.e1rm));
   openSheet({
     title: name, cls: 'tall',
-    body: `${h.length >= 2 ? `<div class="hist-chart">${sparkline(h.map((x) => x.e1rm), 330, 110)}</div><p class="hint">Massimale stimato (formula di Epley) seduta per seduta.</p>` : ''}
+    body: `${h.length >= 2 ? `<div class="hist-chart g-${exInfo(name).group}">${sparkline(h.map((x) => x.e1rm), 330, 110)}</div><p class="hint">Massimale stimato (formula di Epley) seduta per seduta.</p>` : ''}
       <p class="list-label">Record: ${best > 0 ? fmt1(best) + ' kg stimati' : '–'}</p>
       <ul class="wo-list">${h.slice().reverse().map((x) => `<li><div class="hist-row"><span><b>${esc(dayLabel(x.date))}</b>${x.deload ? ' <small class="muted">scarico</small>' : ''}<small>${esc(setsText(x.sets))}</small></span><span class="wo-meta">${fmt1(x.e1rm)}<small>1RM stim.</small></span></div></li>`).join('')}</ul>`,
   });

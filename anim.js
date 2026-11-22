@@ -204,7 +204,7 @@ function frameSvg(spec, k) {
 function exerciseAnim(name, cls = '') {
   const spec = ANIMS[name];
   if (!spec) return '';
-  return `<div class="ex-anim ${cls}" data-anim="${esc(name)}"><svg viewBox="0 -24 200 174" role="img" aria-label="Animazione: ${esc(name)}">
+  return `<div class="ex-anim g-${exInfo(name).group} ${cls}" data-anim="${esc(name)}"><svg viewBox="0 -24 200 174" role="img" aria-label="Animazione: ${esc(name)}">
     <line class="ground" x1="10" y1="${GROUND}" x2="190" y2="${GROUND}"/><g class="fig">${frameSvg(spec, 0)}</g></svg></div>`;
 }
 // Loop at the real rhythm of the lift: concentric (effort) fast, hold at contraction,

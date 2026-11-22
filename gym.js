@@ -364,8 +364,8 @@ function renderPalestra() {
   let html = `<header class="top"><h1>Palestra</h1><button type="button" class="pill-btn" data-g="timer">${I.timer}<span>Timer</span></button></header>`;
   html += `<button type="button" class="card week-card ${wk.deload ? 'deload' : ''}" data-g="gym-cfg"><span class="wk-n">Settimana ${wk.i + 1} di ${wk.len}</span><b>${esc(wk.name)}${wk.deload ? '' : ` · RIR ${wk.rir}`}</b><small>${esc(wk.note)}</small>
     <span class="wk-dots">${Array.from({ length: wk.len }, (_, i) => `<i class="${i < wk.i ? 'past' : i === wk.i ? 'now' : ''}"></i>`).join('')}</span></button>`;
-  html += `<section class="card split-card"><p class="list-label first">${sel === nextGroup() ? 'Prossimo allenamento' : 'Allenamento scelto'}</p>
-    <div class="group-chips">${GROUPS.map((g) => { const s = groupStatus(g.id); return `<button type="button" data-group="${g.id}" class="${g.id === sel ? 'on' : ''} ${s.ready ? '' : 'resting'}"><b>${g.name}</b><small>${s.days == null ? 'mai fatto' : s.days === 0 ? 'oggi' : s.days === 1 ? 'ieri' : s.days + ' giorni fa'}</small></button>`; }).join('')}</div>
+  html += `<section class="card split-card g-${sel}"><p class="list-label first">${sel === nextGroup() ? 'Prossimo allenamento' : 'Allenamento scelto'}</p>
+    <div class="group-chips">${GROUPS.map((g) => { const s = groupStatus(g.id); return `<button type="button" data-group="${g.id}" class="g-${g.id} ${g.id === sel ? 'on' : ''} ${s.ready ? '' : 'resting'}"><b>${g.name}</b><small>${s.days == null ? 'mai fatto' : s.days === 0 ? 'oggi' : s.days === 1 ? 'ieri' : s.days + ' giorni fa'}</small></button>`; }).join('')}</div>
     ${st.ready ? '' : `<p class="hint warn-txt">${esc(GROUPS.find((g) => g.id === sel).name)} è ancora in recupero: ${st.left === 1 ? 'manca 1 giorno' : `mancano ${st.left} giorni`}.</p>`}
     <div class="tpl-list">${tpl.map((b, bi) => `<div class="tpl-block ${b.ex.length > 1 ? 'super' : ''}">${b.ex.length > 1 ? '<span class="tag">Superserie</span>' : ''}
       ${b.ex.map((e) => { const nm = pickVariant(e, sel); return `<button type="button" class="tpl-ex" data-info="${esc(b.ex.length > 1 ? b.ex.map((x) => pickVariant(x, sel)).join('|') : nm)}"><span>${esc(nm)}${e.alt ? `<small class="alt">alterna con ${esc(nm === e.name ? e.alt : e.name)}</small>` : ''}</span><small>${wk.deload ? deloadSets(e.sets) : e.sets}×${esc(e.reps)}</small></button>`; }).join('')}
@@ -380,7 +380,7 @@ function renderPalestra() {
     const weekAgo = Date.now() - 7 * 864e5;
     const wk = hist.filter((x) => x.start >= weekAgo).length;
     html += `<section class="card list-card"><h3>Storico <small class="muted">· ${wk} questa settimana</small></h3><ul class="wo-list">` + hist.slice(0, 40).map((x) => `<li><button type="button" data-g="wo-open" data-id="${x.id}">
-      <span><b>${esc(dayLabel(x.date))}${x.group ? ' · ' + esc((GROUPS.find((g) => g.id === x.group) || {}).name || '') : ''}</b><small>${esc(x.ex.map((e) => e.name).join(', '))}</small></span>
+      <span><b>${x.group ? `<i class="gdot g-${x.group}"></i>` : ''}${esc(dayLabel(x.date))}${x.group ? ' · ' + esc((GROUPS.find((g) => g.id === x.group) || {}).name || '') : ''}</b><small>${esc(x.ex.map((e) => e.name).join(', '))}</small></span>
       <span class="wo-meta">${dur(x.end - x.start)}<small>${fmt(volume(x))} kg</small></span></button></li>`).join('') + '</ul></section>';
   }
   html += `<section class="card rows"><button type="button" class="row" data-g="progress"><span>Progressi e record<small>Massimali stimati, andamento dei carichi, serie a settimana per gruppo</small></span>${I.chev}</button>
@@ -393,12 +393,13 @@ function renderSession(w) {
   const blocks = workoutBlocks(w);
   const nx = nextSet(w);
   const doneSets = w.ex.reduce((a, e) => a + e.sets.filter((s) => s.done).length, 0);
-  let html = `<header class="top"><h1>${w.group ? esc(GROUPS.find((g) => g.id === w.group).name) : 'Allenamento'}</h1><button type="button" class="btn primary sm" data-g="finish">Termina</button></header>`;
-  html += `<section class="card wo-head time-card" id="time-card">${timeCardInner(w)}</section>`;
+  const gc = w.group ? `g-${w.group}` : '';
+  let html = `<header class="top"><h1>${w.group ? `<i class="gdot ${gc}"></i>` + esc(GROUPS.find((g) => g.id === w.group).name) : 'Allenamento'}</h1><button type="button" class="btn primary sm" data-g="finish">Termina</button></header>`;
+  html += `<section class="card wo-head time-card ${gc}" id="time-card">${timeCardInner(w)}</section>`;
   blocks.forEach((b, bi) => {
     const sup = b.ex.length > 1;
     const bDone = b.ex.every((i) => w.ex[i].sets.every((s) => s.done));
-    html += `<section class="card block ${sup ? 'super' : ''} ${bDone ? 'bdone' : ''} ${nx && nx.bi === bi ? 'current' : ''}" data-bi="${bi}">
+    html += `<section class="card block ${gc} ${sup ? 'super' : ''} ${bDone ? 'bdone' : ''} ${nx && nx.bi === bi ? 'current' : ''}" data-bi="${bi}">
       <div class="block-head"><span class="tag">${sup ? 'Superserie' : 'Esercizio'} ${bi + 1}</span>
         <button type="button" class="rest-chip" data-g="rest" data-bi="${bi}">${I.timer}<span>${clock(b.rest)}</span></button>
         <button type="button" class="icon-btn sm" data-g="block-menu" data-bi="${bi}" aria-label="Altre azioni">${I.more}</button></div>
@@ -709,7 +710,7 @@ function onSetDone(w, ei, si, btn) {
     row.querySelectorAll('input').forEach((inp) => { if (!inp.value && inp.placeholder) { inp.value = inp.placeholder; s[inp.dataset.f] = inp.placeholder.replace(',', '.'); } });
     haptic(1);
     s.pr = isRecord(w.ex[ei].name, s, w);
-    if (s.pr) { haptic(2); toast(`Record su ${w.ex[ei].name}: ${fmt1(setE1rm(s))} kg di massimale stimato`); }
+    if (s.pr) { haptic(2); toast(`Record su ${w.ex[ei].name}: ${fmt1(setE1rm(s))} kg di massimale stimato`); $('toast').classList.add('rec'); }
     const blocks = workoutBlocks(w);
     const b = blocks.find((x) => x.ex.includes(ei));
     // superset: go straight to the next exercise of the round, rest only after the round

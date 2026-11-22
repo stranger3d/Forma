@@ -1378,7 +1378,7 @@ if (!state.profile.done) setTimeout(() => openProfileSheet(true), 400);
 // version is published it downloads in the background and the app reloads onto it
 // (never while you are typing in a field).
 // keep in step with VERSION in sw.js
-const APP_VERSION = '2026.11.22-15';
+const APP_VERSION = '2026.11.22-16';
 // drop the offline copy and load everything fresh from the site (data in localStorage stays)
 async function forceUpdate() {
   save();

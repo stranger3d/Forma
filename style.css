@@ -731,3 +731,37 @@ body { background: var(--bg); }
 .e-kcal { font-weight: 700; }
 .slot-actions .add-btn, .slot-actions .ghost-btn { border-radius: 14px; padding: 10px 14px; }
 .streak-card, .cons-card, .advice { border-radius: var(--radius); }
+
+/* ================= redesign (stage 2): gym ================= */
+.block-mini { display: flex; align-items: center; gap: 12px; padding: 14px 16px; text-align: left; }
+.block-mini .chev { position: static; transform: none; }
+.bm-n { width: 34px; height: 34px; border-radius: 12px; flex: none; display: grid; place-items: center; font-weight: 750; background: color-mix(in srgb, var(--gc, var(--accent)) 16%, transparent); color: var(--gc, var(--accent-ink)); }
+.block-mini.bdone { opacity: .55; }
+.bm-name { flex: 1; min-width: 0; display: grid; font-weight: 650; }
+.bm-name small { color: var(--muted); font-weight: 500; font-size: 13px; }
+section.block { scroll-margin-top: 12px; }
+.focus-nav { display: flex; gap: 10px; margin-top: 4px; }
+.focus-nav .btn { padding: 14px 10px; font-size: 16px; }
+.focus-nav .btn:not(.primary) { background: var(--card2); }
+/* group filter pills */
+.group-chips { display: flex; gap: 8px; overflow-x: auto; margin: 0 -16px 12px; padding: 2px 16px; scrollbar-width: none; }
+.group-chips::-webkit-scrollbar { display: none; }
+.group-chips button { flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 10px 14px; border-radius: 99px; background: var(--card); box-shadow: none; }
+.group-chips button .gdot { margin: 0; }
+.group-chips b { font-size: 15px; }
+.group-chips small { font-size: 12px; }
+.group-chips button.on { background: color-mix(in srgb, var(--gc) 22%, var(--card)); box-shadow: inset 0 0 0 1.5px var(--gc); }
+.group-chips button.on b { color: var(--text); }
+/* today's workout hero */
+.tpl-hero { display: grid; gap: 2px; margin-bottom: 4px; }
+.tpl-hero > small { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.tpl-hero > b { font-size: 38px; font-weight: 800; letter-spacing: -.03em; line-height: 1.05; color: var(--gc); }
+.tpl-meta { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.tpl-meta span { padding: 7px 12px; border-radius: 99px; background: var(--card2); font-size: 13px; color: var(--muted); }
+.tpl-meta b { color: var(--text); font-size: 14px; }
+:root[data-theme="dark"] .split-card { background: radial-gradient(90% 60% at 90% 0%, color-mix(in srgb, var(--gc) 16%, transparent), transparent 70%), var(--card); }
+.tpl-block { border-radius: 18px; padding: 10px 12px; }
+.tpl-thumb { width: 64px; }
+.ex-anim.xs { background: var(--card2); }
+.tpl-block .ex-anim.xs { background: var(--card); }
+.week-card { border-radius: var(--radius); }

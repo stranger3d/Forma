@@ -358,11 +358,13 @@ function shiftPlanKcal(delta) {
   save();
 }
 function adviceCard(where) {
-  if (!state.plan.on) return '';
-  const a = planAdvice();
-  const ad = eatenAvg(7, dkey());
-  return `<section class="card advice ${a.tone}"><h3>Andamento e piano</h3><p>${esc(a.text)}</p>
+  const notes = typeof coachNotes === 'function' ? coachNotes() : [];
+  if (!state.plan.on && !notes.length) return '';
+  const a = state.plan.on ? planAdvice() : { tone: '', text: '', delta: 0 };
+  const ad = state.plan.on ? eatenAvg(7, dkey()) : null;
+  return `<section class="card advice ${a.tone}"><h3 class="ai-title">${typeof SPARK === 'string' ? SPARK : ''}Analisi del coach</h3>${a.text ? `<p>${esc(a.text)}</p>` : ''}
     ${ad && ad.n >= 3 ? `<p class="hint">Ultimi ${ad.n} giorni segnati: media ${fmt(ad.kcal)} kcal su ${fmt(ad.target)} previste.</p>` : ''}
+    ${notes.length ? `<ul class="ai-notes">${notes.map((n) => `<li>${n}</li>`).join('')}</ul>` : ''}
     ${a.delta ? `<button type="button" class="btn primary sm" data-advice="${a.delta}" data-where="${where}">${a.delta > 0 ? 'Aggiungi' : 'Togli'} ${fmt(Math.abs(a.delta))} kcal al piano</button>` : ''}</section>`;
 }
 function applyAdvice(delta) {

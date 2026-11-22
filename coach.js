@@ -155,3 +155,78 @@ function openExerciseHistory(name) {
       <ul class="wo-list">${h.slice().reverse().map((x) => `<li><div class="hist-row"><span><b>${esc(dayLabel(x.date))}</b>${x.deload ? ' <small class="muted">scarico</small>' : ''}<small>${esc(setsText(x.sets))}</small></span><span class="wo-meta">${fmt1(x.e1rm)}<small>1RM stim.</small></span></div></li>`).join('')}</ul>`,
   });
 }
+
+// ---------- consistency: streak, heatmaps, coach analysis ----------
+// a day is "in target" when something is logged and kcal are 85-103% of that day's target
+function dayHit(k) {
+  const list = state.diary[k];
+  if (!list || !list.length) return null;
+  const t = targetsFor(k).kcal;
+  const f = t > 0 ? sumVals(list).kcal / t : 0;
+  return f >= 0.85 && f <= 1.03;
+}
+function dietStreak() {
+  const today = dkey();
+  let k = dayHit(today) ? today : addDays(today, -1), cur = 0;
+  while (dayHit(k)) { cur++; k = addDays(k, -1); }
+  let best = 0, run = 0;
+  for (let i = 365; i >= 0; i--) { if (dayHit(addDays(today, -i))) { run++; best = Math.max(best, run); } else run = 0; }
+  return { cur, best: Math.max(best, cur) };
+}
+function trainedOn(k) { const w = state.gym.workouts.find((x) => x.end && x.date === k); return w ? (w.group || 'altro') : null; }
+const FLAME = '<svg class="flame" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 2c1 3.2-1.6 4.9-3 7-1.2 1.8-2 3.4-2 5.4A5 5 0 0 0 12 22a5 5 0 0 0 5-5.3c0-2.5-1.4-4-2.3-5.3-.3 1.4-1 2.3-2 2.6.6-2.9.4-6.4-.7-12z"/></svg>';
+const SPARK = '<svg class="sparkle" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M12 2.5c.6 4.9 2.6 6.9 7.5 7.5-4.9.6-6.9 2.6-7.5 7.5-.6-4.9-2.6-6.9-7.5-7.5 4.9-.6 6.9-2.6 7.5-7.5z"/></svg>';
+const CHECK = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M9.5 16.2 5.3 12l-1.4 1.4 5.6 5.6L20.1 8.4 18.7 7z"/></svg>';
+// Oggi: flame + this week's days (check when in target, dot when trained)
+function streakCard() {
+  const s = dietStreak();
+  const today = dkey(), ws = weekStart(today);
+  const days = Array.from({ length: 7 }, (_, i) => addDays(ws, i));
+  const circles = days.map((k, i) => {
+    const h = dayHit(k), g = trainedOn(k);
+    const st = h ? 'hit' : k === today ? 'today' : k > today ? 'future' : h === false ? 'miss' : 'blank';
+    return `<span class="sd ${st}"><i>${h ? CHECK : ''}</i><small>${'LMMGVSD'[i]}</small>${g ? `<b class="g-${g}"></b>` : '<b class="none"></b>'}</span>`;
+  }).join('');
+  return `<section class="card streak-card ${s.cur ? 'on' : ''}">
+    <div class="sk-top">${FLAME}<div><span class="sk-label">Serie in target</span><b>${s.cur}<small> ${s.cur === 1 ? 'giorno' : 'giorni'}</small></b></div>
+      <span class="sk-best">record<br><b>${s.best}</b></span></div>
+    <div class="sk-week">${circles}</div></section>`;
+}
+// Peso: last 12 weeks, one square per day, columns are weeks
+function heatGrid(cell) {
+  const today = dkey(), start = addDays(weekStart(today), -77);
+  let html = '';
+  for (let w = 0; w < 12; w++) for (let d = 0; d < 7; d++) {
+    const k = addDays(start, w * 7 + d);
+    html += k > today ? '<i class="fut"></i>' : cell(k);
+  }
+  return `<div class="heat">${html}</div>`;
+}
+function consistencyCard() {
+  const today = dkey();
+  let logged = 0, hits = 0, sessions = 0;
+  for (let i = 0; i < 84; i++) { const k = addDays(today, -i); const h = dayHit(k); if (h != null) { logged++; if (h) hits++; } if (trainedOn(k)) sessions++; }
+  const pct = logged ? Math.round((hits / logged) * 100) : 0;
+  return `<section class="card cons-card"><h3>Costanza <small class="muted">· ultime 12 settimane</small></h3>
+    <div class="cons-row"><span>Dieta in target</span><b>${pct}<small>%</small></b></div>
+    ${heatGrid((k) => { const h = dayHit(k); return `<i class="${h ? 'hit' : h === false ? 'miss' : ''}"></i>`; })}
+    <div class="cons-row"><span>Allenamenti</span><b>${sessions}</b></div>
+    ${heatGrid((k) => { const g = trainedOn(k); return g ? `<i class="gym g-${g}"></i>` : '<i></i>'; })}
+    <p class="legend">${GROUPS.map((g) => `<span><i class="gdot g-${g.id}"></i>${g.name}</span>`).join(' ')}</p></section>`;
+}
+// short notes for the coach analysis card
+function coachNotes() {
+  const out = [];
+  const today = dkey();
+  let logged = 0, hits = 0;
+  for (let i = 1; i <= 14; i++) { const h = dayHit(addDays(today, -i)); if (h != null) { logged++; if (h) hits++; } }
+  if (logged >= 3) out.push(`Negli ultimi 14 giorni sei stato in target <b>${hits} giorni su ${logged}</b> segnati.`);
+  const s = dietStreak();
+  if (s.cur >= 3) out.push(`Serie di <b>${s.cur} giorni</b> in target${s.cur >= s.best ? ': è il tuo record' : ''}.`);
+  if (state.plan.on && refeedStatus(today).due) out.push('È il momento di una <b>ricarica</b>: segnala oggi o domani in Oggi.');
+  const stuck = Array.from(new Set(state.gym.workouts.filter((w) => w.end).flatMap((w) => w.ex.map((e) => e.name)))).filter((n) => exInfo(n).kind === 'main' && stalled(n));
+  if (stuck.length) out.push(`Fermi da 3 sedute: <b>${stuck.map(esc).join(', ')}</b>. Scendi del 10% e risali, o passa alla variante.`);
+  const done = state.gym.workouts.filter((w) => w.end && w.date >= addDays(today, -6)).length;
+  if (state.gym.workouts.some((w) => w.end)) out.push(`Questa settimana: <b>${done} ${done === 1 ? 'allenamento' : 'allenamenti'}</b>.`);
+  return out;
+}

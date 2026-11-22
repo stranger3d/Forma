@@ -368,7 +368,7 @@ function renderPalestra() {
     <div class="group-chips">${GROUPS.map((g) => { const s = groupStatus(g.id); return `<button type="button" data-group="${g.id}" class="g-${g.id} ${g.id === sel ? 'on' : ''} ${s.ready ? '' : 'resting'}"><b>${g.name}</b><small>${s.days == null ? 'mai fatto' : s.days === 0 ? 'oggi' : s.days === 1 ? 'ieri' : s.days + ' giorni fa'}</small></button>`; }).join('')}</div>
     ${st.ready ? '' : `<p class="hint warn-txt">${esc(GROUPS.find((g) => g.id === sel).name)} è ancora in recupero: ${st.left === 1 ? 'manca 1 giorno' : `mancano ${st.left} giorni`}.</p>`}
     <div class="tpl-list">${tpl.map((b, bi) => `<div class="tpl-block ${b.ex.length > 1 ? 'super' : ''}">${b.ex.length > 1 ? '<span class="tag">Superserie</span>' : ''}
-      ${b.ex.map((e) => { const nm = pickVariant(e, sel); return `<button type="button" class="tpl-ex" data-info="${esc(b.ex.length > 1 ? b.ex.map((x) => pickVariant(x, sel)).join('|') : nm)}"><span>${esc(nm)}${e.alt ? `<small class="alt">alterna con ${esc(nm === e.name ? e.alt : e.name)}</small>` : ''}</span><small>${wk.deload ? deloadSets(e.sets) : e.sets}×${esc(e.reps)}</small></button>`; }).join('')}
+      ${b.ex.map((e) => { const nm = pickVariant(e, sel); return `<button type="button" class="tpl-ex" data-info="${esc(b.ex.length > 1 ? b.ex.map((x) => pickVariant(x, sel)).join('|') : nm)}"><span class="tpl-thumb">${typeof exerciseAnim === 'function' ? exerciseAnim(nm, 'xs') : ''}</span><span class="tpl-name">${esc(nm)}${e.alt ? `<small class="alt">alterna con ${esc(nm === e.name ? e.alt : e.name)}</small>` : ''}</span><small>${wk.deload ? deloadSets(e.sets) : e.sets}×${esc(e.reps)}</small></button>`; }).join('')}
       <small class="muted tpl-rest">recupero ${clock(b.rest)}</small></div>`).join('') || '<p class="empty">Scheda vuota: aggiungi esercizi.</p>'}</div>
     ${alerts.map((a) => `<p class="coach-alert ${a.tone}">${esc(a.text)}</p>`).join('')}
     <div class="tpl-time ${fits ? '' : 'over'}"><span>≈ ${Math.round(sec / 60)} min</span><span>${fits ? `finisci verso le ${hhmm(Date.now() + sec * 1000)}` : `sfori di ${Math.ceil((Date.now() + sec * 1000 - endAt) / 60000)} min rispetto alle ${hhmm(endAt)}`}</span></div>
@@ -386,6 +386,7 @@ function renderPalestra() {
   html += `<section class="card rows"><button type="button" class="row" data-g="progress"><span>Progressi e record<small>Massimali stimati, andamento dei carichi, serie a settimana per gruppo</small></span>${I.chev}</button>
     <button type="button" class="row" data-g="gym-cfg"><span>Ciclo, orari e recuperi<small>Ciclo di ${state.gym.cfg.cycle.len} settimane · fine entro le ${esc(state.gym.cfg.end)} · giorni di riposo per gruppo</small></span>${I.chev}</button></section>`;
   $('v-palestra').innerHTML = html;
+  if (typeof startAnims === 'function') startAnims($('v-palestra'));
 }
 let gymSel = null;
 

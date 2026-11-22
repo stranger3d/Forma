@@ -3,7 +3,7 @@
 // RELEASE RULE: change VERSION every time any app file changes. The browser
 // notices that sw.js is different, downloads the new files into a fresh cache
 // and the page reloads onto them. Old caches are deleted.
-const VERSION = '2026.11.22-11';
+const VERSION = '2026.11.22-12';
 const CACHE = 'forma-' + VERSION;
 const ASSETS = [
   './', 'index.html', 'style.css', 'app.js', 'foods.js', 'plan.js', 'gym.js', 'coach.js', 'anim.js', 'manifest.webmanifest',
@@ -13,7 +13,8 @@ const ASSETS = [
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE)
-      .then((c) => c.addAll(ASSETS.map((u) => new Request(u, { cache: 'reload' }))))
+      // ?v= skips the GitHub Pages CDN copy (kept up to 10 minutes after a deploy)
+      .then((c) => c.addAll(ASSETS.map((u) => new Request(u + (u.includes('?') ? '&' : '?') + 'v=' + VERSION, { cache: 'reload' }))))
       .then(() => self.skipWaiting())
   );
 });
@@ -33,7 +34,7 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
   if (req.mode === 'navigate') {
-    e.respondWith(caches.open(CACHE).then((c) => c.match('index.html')).then((hit) => hit || fetch(req)).catch(() => fetch(req)));
+    e.respondWith(caches.open(CACHE).then((c) => c.match('index.html', { ignoreSearch: true })).then((hit) => hit || fetch(req)).catch(() => fetch(req)));
     return;
   }
   e.respondWith(

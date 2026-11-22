@@ -1119,6 +1119,9 @@ function renderProfilo() {
     <button type="button" class="row" data-p="export"><span>Salva backup<small>Un file con tutti i tuoi dati</small></span>${I.chev}</button>
     <button type="button" class="row" data-p="import"><span>Ripristina backup<small>Sostituisce i dati di questo telefono</small></span>${I.chev}</button>
   </section>
+  <section class="card rows">
+    <button type="button" class="row" data-p="update"><span>Aggiorna l'app<small>Versione ${APP_VERSION} · scarica subito l'ultima versione, i dati restano</small></span>${I.chev}</button>
+  </section>
   <p class="foot">Forma tiene tutto su questo telefono. I dati degli alimenti confezionati vengono da Open Food Facts; quelli di base sono valori medi. I calcoli sono stime: per esigenze mediche chiedi a un professionista.</p>`;
   $('v-profilo').innerHTML = html;
 }
@@ -1131,7 +1134,7 @@ $('v-profilo').addEventListener('click', (ev) => {
   }
   const pc = ev.target.closest('[data-pace]');
   if (pc) { state.profile.pace = +pc.dataset.pace; save(); haptic(1); renderProfilo(); return; }
-  const th = ev.target.closest('[data-theme]');
+  const th = ev.target.closest('#theme-seg [data-theme]');
   if (th) { state.settings.theme = th.dataset.theme; save(); applyTheme(); renderProfilo(); return; }
   const b = ev.target.closest('[data-p]'); if (!b) return;
   const a = b.dataset.p;
@@ -1142,6 +1145,7 @@ $('v-profilo').addEventListener('click', (ev) => {
   else if (a === 'plan') openPlanSheet();
   else if (a === 'export') exportBackup();
   else if (a === 'import') $('import-file').click();
+  else if (a === 'update') forceUpdate();
 });
 $('v-profilo').addEventListener('change', (ev) => {
   if (ev.target.id === 's-online') { state.settings.online = ev.target.checked; save(); }
@@ -1314,6 +1318,19 @@ if (!state.profile.done) setTimeout(() => openProfileSheet(true), 400);
 // The service worker keeps a copy of the app so it opens without signal. When a new
 // version is published it downloads in the background and the app reloads onto it
 // (never while you are typing in a field).
+// keep in step with VERSION in sw.js
+const APP_VERSION = '2026.11.22-12';
+// drop the offline copy and load everything fresh from the site (data in localStorage stays)
+async function forceUpdate() {
+  save();
+  toast('Aggiorno…');
+  const clear = (async () => {
+    if ('serviceWorker' in navigator) await Promise.all((await navigator.serviceWorker.getRegistrations()).map((r) => r.unregister()));
+    if (window.caches) await Promise.all((await caches.keys()).map((k) => caches.delete(k)));
+  })().catch(() => {});
+  await Promise.race([clear, new Promise((r) => setTimeout(r, 2500))]);
+  location.replace(location.pathname + '?v=' + Date.now());
+}
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
   const sw = navigator.serviceWorker;
   const hadController = !!sw.controller;

@@ -341,3 +341,41 @@ body.has-timer #views { padding-bottom: calc(var(--tabh) + env(safe-area-inset-b
   .ring-center .big { font-size: 28px; }
   .row .seg { flex-basis: 180px; }
 }
+
+/* ---------- meal plan ---------- */
+.plan-card { display: grid; gap: 12px; }
+.plan-card .hint:empty { display: none; }
+.plan-card .hint { margin: 0; }
+.day-seg button { font-size: 14px; }
+.plan-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.plan-actions .small { font-size: 14px; }
+.refeed-due { display: grid; gap: 2px; text-align: left; padding: 12px 14px; border-radius: 16px; background: rgba(255, 198, 92, .14); border: 1.5px solid var(--cc); }
+.refeed-due span { color: var(--muted); font-size: 14px; }
+.water { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 10px; font-size: 15px; }
+.water b { font-variant-numeric: tabular-nums; }
+.wbar { height: 6px; border-radius: 9px; background: var(--card2); overflow: hidden; }
+.wbar i { display: block; height: 100%; background: var(--pc); border-radius: inherit; transform-origin: left; transition: transform .6s var(--spring); }
+.water .icon-btn { font-size: 20px; font-weight: 700; background: var(--card2); }
+.water .icon-btn.plus { background: var(--accent-soft); color: var(--accent-ink); }
+.grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.grid4 .field input { padding: 0 8px; font-size: 16px; text-align: center; }
+.pl-meal { margin-top: 14px; padding: 12px 14px 6px; border-radius: 18px; background: var(--card); }
+.pl-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+.pl-item { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 9px 0; border-top: 1px solid var(--line); }
+.pl-item > span:first-child { display: grid; gap: 1px; font-weight: 600; }
+.pl-item small { color: var(--muted); font-weight: 500; }
+.swap-ic { color: var(--accent-ink); font-size: 18px; }
+.pl-meal .ghost-btn { margin: 4px 0 6px; }
+.notes { margin-top: 16px; padding: 12px 14px; border-radius: 16px; background: var(--card); font-size: 14px; line-height: 1.45; }
+.notes p { margin: 0 0 6px; }
+.notes p:last-child { margin: 0; }
+.match { font-weight: 650 !important; }
+.match.hi { color: var(--down) !important; }
+.match.mid { color: var(--cc) !important; }
+.btn.wide { display: block; width: 100%; margin-top: 12px; flex: none; }
+.advice p { margin: 8px 0 0; line-height: 1.4; }
+.advice.warn { border: 1.5px solid var(--cc); }
+.advice.ok { border: 1.5px solid var(--down); }
+.advice .btn { margin-top: 12px; }
+.plan-row { position: relative; display: grid; gap: 4px; width: 100%; text-align: left; padding-right: 40px; }
+.plan-row span { color: var(--muted); font-size: 14px; }

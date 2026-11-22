@@ -3,10 +3,10 @@
 // RELEASE RULE: change VERSION every time any app file changes. The browser
 // notices that sw.js is different, downloads the new files into a fresh cache
 // and the page reloads onto them. Old caches are deleted.
-const VERSION = '2026.11.22-1';
+const VERSION = '2026.11.22-2';
 const CACHE = 'forma-' + VERSION;
 const ASSETS = [
-  './', 'index.html', 'style.css', 'app.js', 'foods.js', 'manifest.webmanifest',
+  './', 'index.html', 'style.css', 'app.js', 'foods.js', 'plan.js', 'manifest.webmanifest',
   'vendor/zxing.min.js', 'icons/apple-touch-icon.png', 'icons/icon-192.png', 'icons/icon-512.png',
 ];
 

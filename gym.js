@@ -81,39 +81,42 @@ const SWITCH_SEC = 15;                 // moving from one exercise to the next i
 const BLOCK_GAP = 60;                  // setting up the next block
 
 const exInfo = (name) => EXLIB[name] || { name, group: 'altro', kind: 'acc', muscles: '', how: '' };
-const E = (name, sets, reps) => ({ name, sets, reps });
+const E = (name, sets, reps, alt) => (alt ? { name, sets, reps, alt } : { name, sets, reps }); // alt: variant used every other session
 // blocks: one exercise, or a superset (exercises done one after the other, rest after the round)
 function gymTemplatesDefault() {
+  // Definitive templates: heavy compound first (6-10), then secondary work and
+  // isolation with full stretch (10-15), supersets to stay inside 55 minutes.
+  // ~14-17 hard sets for the main group. Main lifts alternate with a variant.
   return {
     petto: [
-      { ex: [E('Panca inclinata bilanciere', 4, '8-12'), E('Croci su panca inclinata', 3, '10')], rest: 150 },
-      { ex: [E('Chest press', 4, '8-12'), E('Croci su panca piana', 3, '10')], rest: 150 },
-      { ex: [E('Croci ai cavi', 3, '12-15')], rest: 90 },
+      { ex: [E('Panca inclinata bilanciere', 4, '6-10'), E('Croci su panca inclinata', 3, '10-12')], rest: 150 },
+      { ex: [E('Panca piana manubri', 3, '8-12', 'Chest press'), E('Croci su panca piana', 3, '10-12')], rest: 120 },
+      { ex: [E('Croci ai cavi', 3, '12-15'), E('Croci ai cavi dal basso', 3, '12-15')], rest: 90 },
     ],
     spalle: [
-      { ex: [E('Shoulder press', 4, '8-12')], rest: 150 },
-      { ex: [E('Alzate laterali stripping', 3, '10')], rest: 90 },
+      { ex: [E('Shoulder press', 4, '6-10', 'Lento avanti manubri')], rest: 150 },
+      { ex: [E('Alzate laterali stripping', 3, '10-12'), E('Face pull', 3, '12-15')], rest: 90 },
       { ex: [E('Alzate laterali ai cavi', 3, '12-15')], rest: 90 },
       { ex: [E('Reverse pec deck', 3, '12-15'), E('Croci inverse ai cavi alti', 3, '12-15')], rest: 90 },
     ],
     braccia: [
-      { ex: [E('Curl bilanciere EZ', 4, '8-12'), E('Dip tricipiti', 4, '8-12')], rest: 120 },
-      { ex: [E('Curl su panca inclinata', 3, '10'), E('Estensioni sopra la testa al cavo', 3, '10-12')], rest: 90 },
-      { ex: [E('Curl concentrato', 3, '10-12'), E('Pushdown ai cavi', 3, '10-12')], rest: 90 },
-      { ex: [E('Curl polsi', 3, '15'), E('Curl inverso', 3, '12-15')], rest: 90 },
+      { ex: [E('Curl bilanciere EZ', 4, '8-10'), E('Dip tricipiti', 4, '8-10')], rest: 120 },
+      { ex: [E('Curl su panca inclinata', 3, '10-12'), E('Estensioni sopra la testa al cavo', 3, '10-12')], rest: 90 },
+      { ex: [E('Curl a martello', 3, '10-12', 'Curl concentrato'), E('Pushdown ai cavi', 3, '12-15')], rest: 90 },
+      { ex: [E('Curl polsi', 3, '15-20'), E('Curl inverso', 3, '12-15')], rest: 90 },
     ],
     schiena: [
-      { ex: [E('Lat machine', 4, '8-12')], rest: 150 },
+      { ex: [E('Lat machine', 4, '6-10', 'Trazioni')], rest: 150 },
       { ex: [E('Pulley basso', 4, '8-12')], rest: 150 },
-      { ex: [E('Rematore manubrio', 3, '10')], rest: 120 },
-      { ex: [E('Pulldown braccia tese', 3, '12'), E('Hyperextension', 3, '12')], rest: 90 },
+      { ex: [E('Rematore manubrio', 3, '10-12'), E('Pulldown braccia tese', 3, '12-15')], rest: 120 },
+      { ex: [E('Hyperextension', 3, '12-15')], rest: 90 },
     ],
     gambe: [
-      { ex: [E('Squat', 4, '6-10')], rest: 150 },
+      { ex: [E('Squat', 4, '6-8', 'Leg press')], rest: 150 },
       { ex: [E('Stacco rumeno', 3, '8-10')], rest: 150 },
-      { ex: [E('Affondi bulgari', 3, '10')], rest: 120 },
-      { ex: [E('Leg extension', 3, '12'), E('Leg curl', 3, '12')], rest: 90 },
-      { ex: [E('Calf raise', 3, '12-15')], rest: 90 },
+      { ex: [E('Affondi bulgari', 3, '10-12')], rest: 120 },
+      { ex: [E('Leg extension', 3, '12-15'), E('Leg curl', 3, '10-12')], rest: 90 },
+      { ex: [E('Calf raise', 4, '10-15'), E('Crunch ai cavi', 3, '12-15')], rest: 90 },
     ],
   };
 }
@@ -124,7 +127,9 @@ function gymDefaults() {
     recovery: { petto: 3, schiena: 3, gambe: 3, spalle: 2, braccia: 2 }, // days before training the same group again
     end: '05:45',      // must be done by this time (when the session starts within 2 hours of it)
     budget: 55,        // otherwise: minutes available
-    warmup: 4,         // minutes of warm-up sets before the first exercise
+    warmup: 5,         // minutes of warm-up before the first exercise
+    cycle: { start: null, len: 5 }, // mesocycle (coach.js): start Monday, weeks
+    ver: 2,
   };
 }
 function mergeGym(raw) {
@@ -133,6 +138,9 @@ function mergeGym(raw) {
   out.templates = Object.assign({}, d.templates, (raw && raw.templates) || {});
   out.recovery = Object.assign({}, d.recovery, (raw && raw.recovery) || {});
   if (!Array.isArray(out.order)) out.order = d.order;
+  out.cycle = Object.assign({}, d.cycle, (raw && raw.cycle) || {});
+  // version 1 templates: replace with the definitive ones
+  if (!raw || raw.ver !== 2) { out.templates = d.templates; out.warmup = d.warmup; out.ver = 2; }
   return out;
 }
 
@@ -202,7 +210,12 @@ function blockSec(block, done) {
   }
   return t;
 }
+function weekBlocks(blocks, wk) {
+  if (!wk || !wk.deload) return blocks;
+  return blocks.map((b) => Object.assign({}, b, { ex: b.ex.map((e) => Object.assign({}, e, { sets: deloadSets(e.sets) })) }));
+}
 function templateSec(blocks) {
+  blocks = weekBlocks(blocks, weekInfo());
   return state.gym.cfg.warmup * 60 + blocks.reduce((a, b) => a + blockSec(b), 0) + BLOCK_GAP * Math.max(0, blocks.length - 1);
 }
 // the time by which the session must end
@@ -229,8 +242,9 @@ function remainingSec(w) {
 }
 
 // ---------- progression ----------
-// double progression: when every set reaches the top of the range, add weight
-function progression(name, target, exceptId) {
+// double progression: when every set reaches the top of the range, add weight;
+// deload weeks use 85%; also spots big drop-offs between sets
+function progression(name, target, exceptId, wk) {
   const last = lastSets(name, exceptId);
   if (!last) return null;
   const [lo, hi] = repRange(target.reps);
@@ -239,7 +253,10 @@ function progression(name, target, exceptId) {
   const reps = last.sets.map((s) => num(s.reps) || 0);
   const step = KIND[exInfo(name).kind].step;
   if (!Number.isFinite(kg)) return { kg: NaN, up: false, text: 'Ultima volta: ' + setsText(last.sets) };
-  if (last.sets.length >= target.sets && reps.every((r) => r >= hi)) return { kg: kg + step, up: true, text: `Hai chiuso ${hi} rip. in tutte le serie: sali a ${fmt1(kg + step)} kg` };
+  if (wk && wk.deload) return { kg: roundKg(kg * 0.85) || kg, up: false, text: `Scarico: ${fmt1(roundKg(kg * 0.85))} kg, serie comode` };
+  if (last.sets.length >= Math.min(target.sets, last.sets.length) && reps.every((r) => r >= hi)) return { kg: kg + step, up: true, text: `Hai chiuso ${hi} rip. in tutte le serie: sali a ${fmt1(kg + step)} kg` };
+  const drop = reps.length >= 3 && reps[0] > 0 && reps[reps.length - 1] < reps[0] * 0.6;
+  if (drop) return { kg, up: false, text: `L'ultima volta sei crollato (${reps[0]} → ${reps[reps.length - 1]} rip.): recupero più lungo o −${fmt1(step)} kg` };
   if (reps.some((r) => r < lo)) return { kg, up: false, text: `Resta a ${fmt1(kg)} kg e punta a ${lo}+ rip.` };
   return { kg, up: false, text: `Stesso peso, ${fmt1(kg)} kg: aggiungi una ripetizione dove puoi` };
 }
@@ -252,19 +269,36 @@ function newExercise(name, w, target) {
 }
 function startWorkout(names, group) {
   const start = Date.now();
-  const w = { id: uid(), date: dkey(), start, end: null, ex: [], blocks: [], group: group || null, deadline: group ? deadlineFor(start) : null };
+  cycleStart();
+  const wk = weekInfo();
+  const w = { id: uid(), date: dkey(), start, end: null, ex: [], blocks: [], group: group || null, deadline: group ? deadlineFor(start) : null, week: { i: wk.i, name: wk.name, rir: wk.rir, deload: !!wk.deload, peak: !!wk.peak } };
   state.gym.workouts.push(w);
   state.gym.active = w.id;
   if (group) {
     (state.gym.cfg.templates[group] || []).forEach((b) => {
       const idx = [];
-      b.ex.forEach((e) => { idx.push(w.ex.length); w.ex.push(newExercise(e.name, w, { sets: e.sets, reps: e.reps })); });
+      b.ex.forEach((e) => {
+        const name = pickVariant(e, group);
+        idx.push(w.ex.length);
+        w.ex.push(newExercise(name, w, { sets: wk.deload ? deloadSets(e.sets) : e.sets, reps: e.reps }));
+      });
       w.blocks.push({ ex: idx, rest: clampRest(b.rest) });
     });
   } else names.forEach((n) => addExerciseTo(w, n));
   save();
   if (tab !== 'palestra') showTab('palestra'); else renderPalestra();
   return w;
+}
+// main lift and its variant alternate: use the one not done last time for this group
+function pickVariant(e, group) {
+  if (!e.alt) return e.name;
+  for (let i = state.gym.workouts.length - 1; i >= 0; i--) {
+    const w = state.gym.workouts[i];
+    if (!w.end || w.group !== group) continue;
+    if (w.ex.some((x) => x.name === e.name)) return e.alt;
+    if (w.ex.some((x) => x.name === e.alt)) return e.name;
+  }
+  return e.name;
 }
 function addExerciseTo(w, name) {
   const ex = newExercise(name, w);
@@ -325,13 +359,18 @@ function renderPalestra() {
   const st = groupStatus(sel);
   const endAt = deadlineFor(Date.now());
   const fits = Date.now() + sec * 1000 <= endAt;
+  const wk = weekInfo();
+  const alerts = coachAlerts(sel);
   let html = `<header class="top"><h1>Palestra</h1><button type="button" class="pill-btn" data-g="timer">${I.timer}<span>Timer</span></button></header>`;
+  html += `<button type="button" class="card week-card ${wk.deload ? 'deload' : ''}" data-g="gym-cfg"><span class="wk-n">Settimana ${wk.i + 1} di ${wk.len}</span><b>${esc(wk.name)}${wk.deload ? '' : ` · RIR ${wk.rir}`}</b><small>${esc(wk.note)}</small>
+    <span class="wk-dots">${Array.from({ length: wk.len }, (_, i) => `<i class="${i < wk.i ? 'past' : i === wk.i ? 'now' : ''}"></i>`).join('')}</span></button>`;
   html += `<section class="card split-card"><p class="list-label first">${sel === nextGroup() ? 'Prossimo allenamento' : 'Allenamento scelto'}</p>
     <div class="group-chips">${GROUPS.map((g) => { const s = groupStatus(g.id); return `<button type="button" data-group="${g.id}" class="${g.id === sel ? 'on' : ''} ${s.ready ? '' : 'resting'}"><b>${g.name}</b><small>${s.days == null ? 'mai fatto' : s.days === 0 ? 'oggi' : s.days === 1 ? 'ieri' : s.days + ' giorni fa'}</small></button>`; }).join('')}</div>
     ${st.ready ? '' : `<p class="hint warn-txt">${esc(GROUPS.find((g) => g.id === sel).name)} è ancora in recupero: ${st.left === 1 ? 'manca 1 giorno' : `mancano ${st.left} giorni`}.</p>`}
     <div class="tpl-list">${tpl.map((b, bi) => `<div class="tpl-block ${b.ex.length > 1 ? 'super' : ''}">${b.ex.length > 1 ? '<span class="tag">Superserie</span>' : ''}
-      ${b.ex.map((e) => `<button type="button" class="tpl-ex" data-info="${esc(e.name)}"><span>${esc(e.name)}</span><small>${e.sets}×${esc(e.reps)}</small></button>`).join('')}
+      ${b.ex.map((e) => { const nm = pickVariant(e, sel); return `<button type="button" class="tpl-ex" data-info="${esc(nm)}"><span>${esc(nm)}${e.alt ? `<small class="alt">alterna con ${esc(nm === e.name ? e.alt : e.name)}</small>` : ''}</span><small>${wk.deload ? deloadSets(e.sets) : e.sets}×${esc(e.reps)}</small></button>`; }).join('')}
       <small class="muted tpl-rest">recupero ${clock(b.rest)}</small></div>`).join('') || '<p class="empty">Scheda vuota: aggiungi esercizi.</p>'}</div>
+    ${alerts.map((a) => `<p class="coach-alert ${a.tone}">${esc(a.text)}</p>`).join('')}
     <div class="tpl-time ${fits ? '' : 'over'}"><span>≈ ${Math.round(sec / 60)} min</span><span>${fits ? `finisci verso le ${hhmm(Date.now() + sec * 1000)}` : `sfori di ${Math.ceil((Date.now() + sec * 1000 - endAt) / 60000)} min rispetto alle ${hhmm(endAt)}`}</span></div>
     <div class="sheet-actions"><button type="button" class="btn" data-g="tpl-edit">Modifica scheda</button><button type="button" class="btn primary" data-g="start-group" ${tpl.length ? '' : 'disabled'}>Inizia ${esc(GROUPS.find((g) => g.id === sel).name.toLowerCase())}</button></div>
   </section>`;
@@ -344,7 +383,8 @@ function renderPalestra() {
       <span><b>${esc(dayLabel(x.date))}${x.group ? ' · ' + esc((GROUPS.find((g) => g.id === x.group) || {}).name || '') : ''}</b><small>${esc(x.ex.map((e) => e.name).join(', '))}</small></span>
       <span class="wo-meta">${dur(x.end - x.start)}<small>${fmt(volume(x))} kg</small></span></button></li>`).join('') + '</ul></section>';
   }
-  html += `<section class="card rows"><button type="button" class="row" data-g="gym-cfg"><span>Orari e recuperi<small>Fine entro le ${esc(state.gym.cfg.end)} · riscaldamento ${state.gym.cfg.warmup} min · giorni di riposo per gruppo</small></span>${I.chev}</button></section>`;
+  html += `<section class="card rows"><button type="button" class="row" data-g="progress"><span>Progressi e record<small>Massimali stimati, andamento dei carichi, serie a settimana per gruppo</small></span>${I.chev}</button>
+    <button type="button" class="row" data-g="gym-cfg"><span>Ciclo, orari e recuperi<small>Ciclo di ${state.gym.cfg.cycle.len} settimane · fine entro le ${esc(state.gym.cfg.end)} · giorni di riposo per gruppo</small></span>${I.chev}</button></section>`;
   $('v-palestra').innerHTML = html;
 }
 let gymSel = null;
@@ -366,26 +406,30 @@ function renderSession(w) {
       const e = w.ex[ei];
       const info = exInfo(e.name);
       const tg = e.target;
-      const pr = progression(e.name, tg || { sets: e.sets.length, reps: '8-12' }, w.id);
+      const pr = progression(e.name, tg || { sets: e.sets.length, reps: '8-12' }, w.id, w.week);
+      const rir = w.week ? (w.week.deload ? 4 : w.week.rir) : null;
+      const firstMain = info.kind === 'main' && w.ex.findIndex((x) => exInfo(x.name).kind === 'main') === ei && !e.sets.some((x) => x.done);
+      const workKg = pr && Number.isFinite(pr.kg) ? pr.kg : NaN;
       const last = lastSets(e.name, w.id);
       html += `<div class="ex" data-ei="${ei}"><div class="ex-head"><div><h3>${sup ? `<span class="ss-n">${String.fromCharCode(65 + bi)}${k + 1}</span> ` : ''}${esc(e.name)}</h3>
-          <small class="muted">${tg ? `${tg.sets}×${esc(tg.reps)} · ` : ''}${last ? 'ultima: ' + esc(setsText(last.sets)) : 'prima volta'}</small>
+          <small class="muted">${tg ? `${tg.sets}×${esc(tg.reps)} · ` : ''}${rir != null ? `RIR ${rir}${w.week && w.week.peak && info.kind === 'main' ? ' (ultima serie a cedimento)' : ''} · ` : ''}tempo ${TEMPO[info.kind] || '2-1-1'}</small>
+          <small class="muted">${last ? 'ultima: ' + esc(setsText(last.sets)) : 'prima volta'}</small>
+          ${firstMain && workKg > 0 ? `<small class="warm">${esc(warmupText(e.name, workKg))}</small>` : ''}
           ${pr && pr.up ? `<small class="prog up">▲ ${esc(pr.text)}</small>` : pr && Number.isFinite(pr.kg) ? `<small class="prog">${esc(pr.text)}</small>` : ''}</div>
         <button type="button" class="icon-btn sm info-btn" data-info="${esc(e.name)}" aria-label="Come si fa ${esc(e.name)}">i</button></div>
         <div class="sets"><div class="set-row head"><span>Serie</span><span>kg</span><span>Rip.</span><span></span></div>
         ${e.sets.map((s, si) => {
           const prevHere = si ? e.sets[si - 1] : null;
           const lastS = last && last.sets[Math.min(si, last.sets.length - 1)];
-          const phKg = pr && pr.up ? fmt1(pr.kg) : lastS && lastS.kg !== '' ? fmt1(num(lastS.kg)) : prevHere && prevHere.kg !== '' ? fmt1(num(prevHere.kg)) : '';
+          const phKg = pr && (pr.up || (w.week && w.week.deload)) && Number.isFinite(pr.kg) ? fmt1(pr.kg) : lastS && lastS.kg !== '' ? fmt1(num(lastS.kg)) : prevHere && prevHere.kg !== '' ? fmt1(num(prevHere.kg)) : '';
           const phReps = lastS ? lastS.reps : prevHere && prevHere.reps ? prevHere.reps : tg ? String(repRange(tg.reps)[1]) : '';
           const cur = nx && nx.ei === ei && nx.si === si;
-          return `<div class="set-row ${s.done ? 'done' : ''} ${cur ? 'cur' : ''}" data-si="${si}"><button type="button" class="set-n" data-g="set-rm" data-ei="${ei}" data-si="${si}" aria-label="Togli serie ${si + 1}">${si + 1}</button>
+          return `<div class="set-row ${s.done ? 'done' : ''} ${cur ? 'cur' : ''} ${s.pr ? 'pr' : ''}" data-si="${si}"><button type="button" class="set-n" data-g="set-rm" data-ei="${ei}" data-si="${si}" aria-label="Togli serie ${si + 1}">${si + 1}</button>
             <input inputmode="decimal" data-f="kg" data-ei="${ei}" data-si="${si}" value="${esc(s.kg)}" placeholder="${esc(phKg)}" aria-label="Kg serie ${si + 1}">
             <input inputmode="numeric" data-f="reps" data-ei="${ei}" data-si="${si}" value="${esc(s.reps)}" placeholder="${esc(phReps)}" aria-label="Ripetizioni serie ${si + 1}">
             <button type="button" class="set-ok" data-g="set-ok" data-ei="${ei}" data-si="${si}" aria-label="Serie ${si + 1} fatta" aria-pressed="${s.done}">${I.check}</button></div>`;
         }).join('')}</div>
         <button type="button" class="ghost-btn" data-g="set-add" data-ei="${ei}">${I.plus}<span>Serie</span></button></div>`;
-      if (!info.how) html += '';
     });
     html += '</section>';
   });
@@ -550,6 +594,9 @@ function openGymSettings() {
         <label class="field"><span>Altrimenti min</span><input name="budget" inputmode="numeric" value="${cfg.budget}"></label>
         <label class="field"><span>Riscaldamento</span><input name="warmup" inputmode="numeric" value="${cfg.warmup}"></label></div>
       <p class="hint">Se inizi entro 2 ore dall'orario di fine, la sessione deve chiudersi a quell'ora. Altrimenti hai i minuti indicati.</p>
+      <p class="list-label">Ciclo di allenamento</p>
+      <div class="row static"><span>Settimane (l'ultima è di scarico)</span><div class="seg sm" id="gc-len">${[4, 5, 6].map((n) => `<button type="button" data-len="${n}" class="${cfg.cycle.len === n ? 'on' : ''}">${n}</button>`).join('')}</div></div>
+      <div class="row static"><span>Settimana attuale<small>${esc(weekInfo().name)}, ${weekInfo().i + 1} di ${weekInfo().len}</small></span><button type="button" class="link" id="gc-restart">Ricomincia da qui</button></div>
       <p class="list-label">Giorni di riposo prima di rifare lo stesso gruppo</p>
       ${GROUPS.map((g) => `<div class="row static"><span>${g.name}</span><div class="seg sm">${[1, 2, 3, 4].map((d) => `<button type="button" data-rec="${g.id}" data-d="${d}" class="${cfg.recovery[g.id] === d ? 'on' : ''}">${d}</button>`).join('')}</div></div>`).join('')}
       <p class="list-label">Ordine della rotazione</p>
@@ -559,7 +606,11 @@ function openGymSettings() {
       const form = el.querySelector('#gc-form');
       const rec = Object.assign({}, cfg.recovery);
       const order = cfg.order.slice();
+      let len = cfg.cycle.len, restart = false;
       el.addEventListener('click', (e) => {
+        const ln = e.target.closest('[data-len]');
+        if (ln) { len = +ln.dataset.len; ln.parentNode.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b === ln)); return; }
+        if (e.target.closest('#gc-restart')) { restart = true; e.target.textContent = 'Ricomincia al salvataggio'; return; }
         const r = e.target.closest('[data-rec]');
         if (r) { rec[r.dataset.rec] = +r.dataset.d; r.parentNode.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b === r)); return; }
         const o = e.target.closest('[data-oup]');
@@ -574,6 +625,7 @@ function openGymSettings() {
         const b = num(form.budget.value); if (b >= 15 && b <= 240) cfg.budget = Math.round(b);
         const wu = num(form.warmup.value); if (wu >= 0 && wu <= 30) cfg.warmup = Math.round(wu);
         cfg.recovery = rec; cfg.order = order;
+        if (restart || len !== cfg.cycle.len) { cfg.cycle.len = len; if (restart) cfg.cycle.start = weekStart(dkey()); }
         save(); sh.close(); renderPalestra();
       });
     },
@@ -601,9 +653,15 @@ function gymInit() {
     const w = activeWorkout();
     if (g === 'timer') startTimer(state.gym.rest || 90);
     else if (g === 'start') { startWorkout([]); openExercisePicker(); }
-    else if (g === 'start-group') { const grp = gymSel || nextGroup(); gymSel = null; startWorkout([], grp); }
+    else if (g === 'start-group') {
+      const grp = gymSel || nextGroup();
+      const st = groupStatus(grp);
+      if (!st.ready && !confirm(`${GROUPS.find((x) => x.id === grp).name} è ancora in recupero (${st.days === 0 ? 'fatto oggi' : st.days === 1 ? 'fatto ieri' : `fatto ${st.days} giorni fa`}). Iniziare lo stesso?`)) return;
+      gymSel = null; startWorkout([], grp);
+    }
     else if (g === 'tpl-edit') openTemplateEditor(gymSel || nextGroup());
     else if (g === 'gym-cfg') openGymSettings();
+    else if (g === 'progress') openProgress();
     else if (g === 'ex-add') openExercisePicker();
     else if (g === 'finish') finishWorkout();
     else if (g === 'wo-open') openWorkoutDetail(b.dataset.id);
@@ -635,16 +693,18 @@ function onSetDone(w, ei, si, btn) {
   if (s.done) {
     row.querySelectorAll('input').forEach((inp) => { if (!inp.value && inp.placeholder) { inp.value = inp.placeholder; s[inp.dataset.f] = inp.placeholder.replace(',', '.'); } });
     haptic(1);
+    s.pr = isRecord(w.ex[ei].name, s, w);
+    if (s.pr) { haptic(2); toast(`Record su ${w.ex[ei].name}: ${fmt1(setE1rm(s))} kg di massimale stimato`); }
     const blocks = workoutBlocks(w);
     const b = blocks.find((x) => x.ex.includes(ei));
     // superset: go straight to the next exercise of the round, rest only after the round
     const pos = b.ex.indexOf(ei);
     const nextInRound = b.ex.slice(pos + 1).find((j) => w.ex[j].sets[si] && !w.ex[j].sets[si].done);
     const roundLeft = b.ex.some((j) => w.ex[j].sets.some((x) => !x.done));
-    if (nextInRound != null) { stopTimer(); toast(`Subito: ${w.ex[nextInRound].name}`); }
+    if (nextInRound != null) { stopTimer(); if (!s.pr) toast(`Subito: ${w.ex[nextInRound].name}`); }
     else if (roundLeft) startTimer(b.rest);
     else { stopTimer(); const nx = nextSet(w); if (nx) toast(`Blocco finito. Prossimo: ${w.ex[nx.ei].name}`); else toast('Scheda finita: premi Termina'); }
-  }
+  } else s.pr = false;
   save();
   renderPalestra();
   const cur = document.querySelector('.set-row.cur');

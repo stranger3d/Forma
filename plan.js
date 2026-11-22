@@ -133,7 +133,10 @@ function refeedStatus(k) {
   const from = last || state.plan.start;
   if (!from) return { due: false, since: 0, last };
   const since = daysBetween(from, k);
-  return { due: since >= state.plan.refeed.every && state.plan.days[k] !== 'refeed', since, last };
+  // a deload week in the gym is the natural place for the refeed
+  const deload = typeof weekInfo === 'function' && state.gym.cfg && state.gym.cfg.cycle.start && weekInfo(k).deload;
+  const thisWeek = Object.keys(state.plan.days).some((d) => state.plan.days[d] === 'refeed' && weekStart(d) === weekStart(k));
+  return { due: state.plan.days[k] !== 'refeed' && (since >= state.plan.refeed.every || (deload && since >= 10 && !thisWeek)), since, last, deload };
 }
 
 // ---------- plan meals ----------
@@ -387,7 +390,7 @@ function planCard(k) {
   let html = `<section class="card plan-card">
     <div class="seg day-seg" id="day-seg">${Object.entries(DAY_TYPES).map(([id, d]) => `<button type="button" data-daytype="${id}" class="${type === id ? 'on' : ''}">${d.name}</button>`).join('')}</div>
     <p class="hint">${t.auto ? (type === 'on' ? 'Scelto in automatico: oggi hai un allenamento. ' : 'Scelto in automatico. Tocca per cambiare. ') : ''}${type === 'refeed' ? `Ricarica: +${fmt(refeedKcal())} kcal da carboidrati, grassi un po' più bassi.` : ''}${t.cut ? `Questa settimana c'è una ricarica: −${fmt(t.cut)} kcal oggi per tenere in pari la media.` : ''}</p>`;
-  if (isToday && rs.due) html += `<button type="button" class="refeed-due" data-act="refeed-today"><b>Ricarica consigliata</b><span>${rs.last ? `Sono passati ${rs.since} giorni dall'ultima.` : `Piano iniziato da ${rs.since} giorni.`} Tocca per fare oggi la ricarica.</span></button>`;
+  if (isToday && rs.due) html += `<button type="button" class="refeed-due" data-act="refeed-today"><b>Ricarica consigliata</b><span>${rs.deload ? 'Settimana di scarico in palestra: è il momento giusto. ' : ''}${rs.last ? `Sono passati ${rs.since} giorni dall'ultima.` : `Piano iniziato da ${rs.since} giorni.`} Tocca per fare oggi la ricarica.</span></button>`;
   html += `<div class="plan-actions">${missing.length ? `<button type="button" class="btn primary sm" data-act="plan-fill">Riempi dal piano · ${fmt(sumVals(missing.flatMap((m) => m.items)).kcal)} kcal</button>` : '<span class="muted small">Pasti del piano già nel diario</span>'}
       <button type="button" class="pill-btn" data-act="plan-open">Piano</button></div>
     <div class="water"><span>Acqua <b>${fmt1(water / 1000)}</b> / ${fmt1(wT / 1000)} L</span>

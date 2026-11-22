@@ -455,3 +455,36 @@ body.has-timer #views { padding-bottom: calc(var(--tabh) + env(safe-area-inset-b
 .ex-anim .prop-fill { fill: var(--card2); }
 :root[data-theme="dark"] .ex-anim .prop-fill { fill: #353a42; }
 .ex-anim .ground { stroke: var(--line); stroke-width: 2; }
+
+/* ---------- coach ---------- */
+.week-card { position: relative; display: grid; gap: 2px; width: 100%; text-align: left; }
+.week-card .wk-n { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--accent-ink); }
+.week-card b { font-size: 18px; }
+.week-card small { color: var(--muted); }
+.week-card.deload .wk-n { color: var(--pc); }
+.wk-dots { position: absolute; top: 16px; right: 16px; display: flex; gap: 5px; }
+.wk-dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--card2); }
+.wk-dots i.past { background: var(--muted); }
+.wk-dots i.now { background: var(--accent); }
+.tpl-ex > span:first-child { display: grid; }
+.tpl-ex .alt { color: var(--muted); font-weight: 500; font-size: 12px; }
+.coach-alert { margin: 10px 0 0; padding: 9px 12px; border-radius: 12px; font-size: 14px; line-height: 1.4; background: var(--card2); }
+.coach-alert.warn { background: rgba(255, 198, 92, .13); color: var(--cc); }
+.coach-alert.info { background: rgba(124, 196, 255, .12); color: var(--pc); }
+.warm { color: var(--pc); }
+.set-row.pr .set-ok { background: var(--cc); color: #2a1d00; }
+.vol { display: grid; gap: 8px; }
+.vol-row { display: grid; grid-template-columns: 70px 1fr 28px; align-items: center; gap: 10px; font-size: 14px; }
+.vol-row b { text-align: right; font-variant-numeric: tabular-nums; }
+.vbar { position: relative; height: 8px; border-radius: 9px; background: var(--card2); }
+.vbar i { position: absolute; inset: 0; border-radius: inherit; background: var(--accent); transform-origin: left; }
+.vol-row.low .vbar i { background: var(--cc); }
+.vol-row.high .vbar i { background: var(--red); }
+.vbar em { position: absolute; top: -3px; width: 2px; height: 14px; background: var(--muted); opacity: .6; }
+.spark { flex: none; }
+.spark polyline { fill: none; stroke: var(--accent-ink); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.hist-chart { padding: 12px; border-radius: 16px; background: var(--card); }
+.hist-chart .spark { width: 100%; height: auto; }
+.hist-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; }
+.hist-row > span:first-child { display: grid; }
+.hist-row small { color: var(--muted); }

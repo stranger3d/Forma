@@ -313,6 +313,47 @@ function showTab(name) {
 }
 document.querySelectorAll('.tab').forEach((b) => b.addEventListener('click', () => { if (b.dataset.tab !== tab) { haptic(1); showTab(b.dataset.tab); } }));
 
+// centre button: the quick actions of the day
+function suggestedSlot() { const h = new Date().getHours() + new Date().getMinutes() / 60; return h < 15.5 ? 'pranzo' : h < 19 ? 'merenda' : h < 22 ? 'cena' : 'prenanna'; }
+function openQuick() {
+  haptic(1);
+  const slot = SLOTS.find((x) => x.id === suggestedSlot());
+  const act = state.gym.active && state.gym.workouts.find((w) => w.id === state.gym.active);
+  const grp = typeof nextGroup === 'function' ? nextGroup() : null;
+  const gName = grp ? (GROUPS.find((g) => g.id === grp) || {}).name : '';
+  const sh = openSheet({
+    title: 'Cosa vuoi fare?',
+    body: `<div class="quick">
+      <button type="button" data-q="add" class="q-food"><i>${I.plus}</i><b>Aggiungi cibo</b><small>${esc(slot.name)}</small></button>
+      <button type="button" data-q="scan" class="q-scan"><i>${I.scan}</i><b>Scansiona</b><small>codice a barre</small></button>
+      <button type="button" data-q="gym" class="q-gym g-${act ? act.group || 'altro' : grp}"><i>${I.timer}</i><b>${act ? 'Torna alla sessione' : 'Allenamento'}</b><small>${act ? 'in corso' : esc(gName)}</small></button>
+      <button type="button" data-q="water" class="q-water"><i><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M12 2.5S5.5 9.6 5.5 14.3a6.5 6.5 0 0 0 13 0C18.5 9.6 12 2.5 12 2.5z"/></svg></i><b>Acqua</b><small>+1 bicchiere</small></button>
+      <button type="button" data-q="weight" class="q-weight wide"><i><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 17l5-5 4 3 8-8M15 7h5v5"/></svg></i><b>Registra il peso</b><small>al mattino, a digiuno</small></button>
+    </div>`,
+    onMount(el) {
+      el.addEventListener('click', (ev) => {
+        const q = ev.target.closest('[data-q]'); if (!q) return;
+        sh.close();
+        const k = q.dataset.q;
+        if (k === 'add' || k === 'scan' || k === 'water') { day = dkey(); if (tab !== 'oggi') showTab('oggi'); }
+        if (k === 'add') openAddSheet(slot.id);
+        else if (k === 'scan') openScanner((code) => onScan(code, slot.id, null));
+        else if (k === 'water') { addWater(dkey(), 250); renderOggi(); toast('Acqua: +250 ml'); }
+        else if (k === 'weight') { if (tab !== 'peso') showTab('peso'); openWeightSheet(); }
+        else if (k === 'gym') {
+          if (tab !== 'palestra') showTab('palestra');
+          if (!act && grp) {
+            const st = groupStatus(grp);
+            if (!st.ready && !confirm(`${gName} è ancora in recupero. Iniziare lo stesso?`)) return;
+            gymSel = null; startWorkout([], grp);
+          }
+        }
+      });
+    },
+  });
+}
+$('fab').addEventListener('click', openQuick);
+
 function render() {
   if (tab === 'oggi') renderOggi();
   else if (tab === 'peso') renderPeso();
@@ -393,10 +434,11 @@ function renderOggi() {
   const g = GOALS[state.profile.goal];
   const paceTxt = state.profile.goal === 'keep' ? '' : ` · ${state.profile.goal === 'cut' ? '−' : '+'}${fmt2(state.profile.pace * (state.profile.goal === 'bulk' ? 0.6 : 1))} kg/sett`;
   const yesterday = dayEntries(addDays(day, -1));
-  let html = `<header class="top">
-      <button type="button" class="icon-btn" data-act="day-prev" aria-label="Giorno prima">${I.left}</button>
-      <button type="button" class="day-title" data-act="day-today"><span>${esc(dayLabel(day))}</span>${day !== dkey() ? '<small>torna a oggi</small>' : `<small>${esc(shortDate(day))}</small>`}</button>
-      <button type="button" class="icon-btn" data-act="day-next" aria-label="Giorno dopo">${I.right}</button>
+  const hr = new Date().getHours();
+  const hello = day !== dkey() ? 'Diario' : hr < 5 ? 'Buonanotte' : hr < 13 ? 'Buongiorno' : hr < 18 ? 'Buon pomeriggio' : 'Buonasera';
+  let html = `<header class="top hello">
+      <button type="button" class="hello-txt" data-act="day-today"><small>${esc(hello)}${day !== dkey() ? ' · torna a oggi' : ''}</small><span>${esc(dayLabel(day))}${day === dkey() ? ` <em>${esc(shortDate(day))}</em>` : ''}</span></button>
+      <div class="day-nav"><button type="button" class="icon-btn" data-act="day-prev" aria-label="Giorno prima">${I.left}</button><button type="button" class="icon-btn" data-act="day-next" aria-label="Giorno dopo">${I.right}</button></div>
     </header>`;
   if (!state.profile.done) {
     html += `<button type="button" class="card setup-card" data-act="setup"><b>Imposta il tuo profilo</b><span>Sesso, età, altezza, peso e obiettivo: calcolo io calorie e macro.</span>${I.chev}</button>`;
@@ -1312,7 +1354,7 @@ function applyTheme() {
   const light = t === 'light' || (t === 'auto' && matchMedia('(prefers-color-scheme: light)').matches);
   document.documentElement.dataset.theme = light ? 'light' : 'dark';
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.content = light ? '#f3f5f1' : '#0e1012';
+  if (meta) meta.content = light ? '#f3f5f1' : '#0b0a0f';
 }
 matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => { if (state.settings.theme === 'auto') applyTheme(); });
 
@@ -1336,7 +1378,7 @@ if (!state.profile.done) setTimeout(() => openProfileSheet(true), 400);
 // version is published it downloads in the background and the app reloads onto it
 // (never while you are typing in a field).
 // keep in step with VERSION in sw.js
-const APP_VERSION = '2026.11.22-14';
+const APP_VERSION = '2026.11.22-15';
 // drop the offline copy and load everything fresh from the site (data in localStorage stays)
 async function forceUpdate() {
   save();

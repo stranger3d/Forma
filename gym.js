@@ -364,8 +364,10 @@ function renderPalestra() {
   let html = `<header class="top"><h1>Palestra</h1><button type="button" class="pill-btn" data-g="timer">${I.timer}<span>Timer</span></button></header>`;
   html += `<button type="button" class="card week-card ${wk.deload ? 'deload' : ''}" data-g="gym-cfg"><span class="wk-n">Settimana ${wk.i + 1} di ${wk.len}</span><b>${esc(wk.name)}${wk.deload ? '' : ` · RIR ${wk.rir}`}</b><small>${esc(wk.note)}</small>
     <span class="wk-dots">${Array.from({ length: wk.len }, (_, i) => `<i class="${i < wk.i ? 'past' : i === wk.i ? 'now' : ''}"></i>`).join('')}</span></button>`;
-  html += `<section class="card split-card g-${sel}"><p class="list-label first">${sel === nextGroup() ? 'Prossimo allenamento' : 'Allenamento scelto'}</p>
-    <div class="group-chips">${GROUPS.map((g) => { const s = groupStatus(g.id); return `<button type="button" data-group="${g.id}" class="g-${g.id} ${g.id === sel ? 'on' : ''} ${s.ready ? '' : 'resting'}"><b>${g.name}</b><small>${s.days == null ? 'mai fatto' : s.days === 0 ? 'oggi' : s.days === 1 ? 'ieri' : s.days + ' giorni fa'}</small></button>`; }).join('')}</div>
+  const nEx = tpl.reduce((a, b) => a + b.ex.length, 0);
+  html += `<div class="group-chips">${GROUPS.map((g) => { const s = groupStatus(g.id); return `<button type="button" data-group="${g.id}" class="g-${g.id} ${g.id === sel ? 'on' : ''} ${s.ready ? '' : 'resting'}"><i class="gdot"></i><b>${g.name}</b><small>${s.days == null ? 'mai' : s.days === 0 ? 'oggi' : s.days === 1 ? 'ieri' : s.days + ' gg'}</small></button>`; }).join('')}</div>`;
+  html += `<section class="card split-card g-${sel}"><div class="tpl-hero"><small>${sel === nextGroup() ? 'Prossimo allenamento' : 'Allenamento scelto'}</small><b>${esc(GROUPS.find((g) => g.id === sel).name)}</b>
+      <div class="tpl-meta"><span><b>${Math.round(sec / 60)}</b> min</span><span><b>${nEx}</b> esercizi</span><span><b>${wk.deload ? 'scarico' : 'RIR ' + wk.rir}</b></span></div></div>
     ${st.ready ? '' : `<p class="hint warn-txt">${esc(GROUPS.find((g) => g.id === sel).name)} è ancora in recupero: ${st.left === 1 ? 'manca 1 giorno' : `mancano ${st.left} giorni`}.</p>`}
     <div class="tpl-list">${tpl.map((b, bi) => `<div class="tpl-block ${b.ex.length > 1 ? 'super' : ''}">${b.ex.length > 1 ? '<span class="tag">Superserie</span>' : ''}
       ${b.ex.map((e) => { const nm = pickVariant(e, sel); return `<button type="button" class="tpl-ex" data-info="${esc(b.ex.length > 1 ? b.ex.map((x) => pickVariant(x, sel)).join('|') : nm)}"><span class="tpl-thumb">${typeof exerciseAnim === 'function' ? exerciseAnim(nm, 'xs') : ''}</span><span class="tpl-name">${esc(nm)}${e.alt ? `<small class="alt">alterna con ${esc(nm === e.name ? e.alt : e.name)}</small>` : ''}</span><small>${wk.deload ? deloadSets(e.sets) : e.sets}×${esc(e.reps)}</small></button>`; }).join('')}
@@ -389,6 +391,7 @@ function renderPalestra() {
   if (typeof startAnims === 'function') startAnims($('v-palestra'));
 }
 let gymSel = null;
+let focusBlock = null; // {id, bi}: block opened by hand in the session
 
 function renderSession(w) {
   const blocks = workoutBlocks(w);
@@ -397,9 +400,17 @@ function renderSession(w) {
   const gc = w.group ? `g-${w.group}` : '';
   let html = `<header class="top"><h1>${w.group ? `<i class="gdot ${gc}"></i>` + esc(GROUPS.find((g) => g.id === w.group).name) : 'Allenamento'}</h1><button type="button" class="btn primary sm" data-g="finish">Termina</button></header>`;
   html += `<section class="card wo-head time-card ${gc}" id="time-card">${timeCardInner(w)}</section>`;
+  // focus: one block open at a time (the one with the next set, or the one picked), the others folded
+  const fb = focusBlock && focusBlock.id === w.id && focusBlock.bi < blocks.length ? focusBlock.bi : nx ? nx.bi : Math.max(0, blocks.length - 1);
   blocks.forEach((b, bi) => {
     const sup = b.ex.length > 1;
     const bDone = b.ex.every((i) => w.ex[i].sets.every((s) => s.done));
+    if (bi !== fb) {
+      const dn = b.ex.reduce((a, i) => a + w.ex[i].sets.filter((s) => s.done).length, 0), all = b.ex.reduce((a, i) => a + w.ex[i].sets.length, 0);
+      html += `<button type="button" class="card block-mini ${gc} ${bDone ? 'bdone' : ''}" data-g="focus" data-bi="${bi}"><span class="bm-n">${bDone ? I.check : bi + 1}</span>
+        <span class="bm-name">${b.ex.map((i) => esc(w.ex[i].name)).join(' + ')}<small>${sup ? 'Superserie · ' : ''}${dn}/${all} serie</small></span>${I.chev}</button>`;
+      return;
+    }
     html += `<section class="card block ${gc} ${sup ? 'super' : ''} ${bDone ? 'bdone' : ''} ${nx && nx.bi === bi ? 'current' : ''}" data-bi="${bi}">
       <div class="block-head"><span class="tag">${sup ? 'Superserie' : 'Esercizio'} ${bi + 1}</span>
         <button type="button" class="rest-chip" data-g="rest" data-bi="${bi}">${I.timer}<span>${clock(b.rest)}</span></button>
@@ -434,6 +445,7 @@ function renderSession(w) {
         }).join('')}</div>
         <button type="button" class="ghost-btn" data-g="set-add" data-ei="${ei}">${I.plus}<span>Serie</span></button></div>`;
     });
+    html += `<div class="focus-nav"><button type="button" class="btn" data-g="prev" ${bi === 0 ? 'disabled' : ''}>← Precedente</button><button type="button" class="btn primary" data-g="next" ${bi >= blocks.length - 1 ? 'disabled' : ''}>Successivo →</button></div>`;
     html += '</section>';
   });
   html += `<button type="button" class="add-btn big-add" data-g="ex-add">${I.plus}<span>Aggiungi esercizio</span></button>`;
@@ -684,7 +696,14 @@ function gymInit() {
     else if (g === 'finish') finishWorkout();
     else if (g === 'wo-open') openWorkoutDetail(b.dataset.id);
     else if (!w) return;
-    else if (g === 'set-ok') onSetDone(w, +b.dataset.ei, +b.dataset.si, b);
+    else if (g === 'set-ok') { focusBlock = null; onSetDone(w, +b.dataset.ei, +b.dataset.si, b); }
+    else if (g === 'focus' || g === 'prev' || g === 'next') {
+      const n = workoutBlocks(w).length;
+      const curBi = +(b.closest('[data-bi]') || b).dataset.bi;
+      const cur = g === 'focus' ? +b.dataset.bi : clamp(+(view.querySelector('section.block').dataset.bi) + (g === 'next' ? 1 : -1), 0, n - 1);
+      focusBlock = { id: w.id, bi: Number.isFinite(cur) ? cur : curBi }; haptic(1); renderPalestra();
+      const el = view.querySelector('section.block'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
     else if (g === 'set-add') {
       const sets = w.ex[+b.dataset.ei].sets;
       const prev = sets[sets.length - 1];

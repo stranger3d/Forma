@@ -212,7 +212,7 @@ function toast(msg, action, label = 'Annulla') {
   b.textContent = label;
   b.onclick = action ? () => { t.hidden = true; action(); } : null;
   t.hidden = false;
-  t.classList.remove('show'); void t.offsetWidth; t.classList.add('show');
+  t.classList.remove('show', 'rec'); void t.offsetWidth; t.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { t.hidden = true; }, action ? 5000 : 2600);
 }
@@ -328,9 +328,12 @@ function ring(frac, size, stroke, cls) {
     <circle cx="${size / 2}" cy="${size / 2}" r="${r}" class="ring-bg" stroke-width="${stroke}"/>
     <circle cx="${size / 2}" cy="${size / 2}" r="${r}" class="ring-fg" stroke-width="${stroke}" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - f)}" transform="rotate(-90 ${size / 2} ${size / 2})"/></svg>`;
 }
+// status colour: green in target, orange a little over, red clearly over
+function kcalState(v, t) { const f = t > 0 ? v / t : 0; return f > 1.03 ? 'over' : f > 1 ? 'near' : f >= 0.95 ? 'hit' : ''; }
 function macroBar(label, val, target, cls) {
   const frac = target > 0 ? val / target : 0;
-  return `<div class="macro ${cls}"><div class="macro-top"><span>${label}</span><b>${fmt(val)}<small> / ${fmt(target)} g</small></b></div>
+  const st = frac > 1.12 ? ' over' : frac > 1.05 ? ' near' : frac >= 0.92 ? ' hit' : '';
+  return `<div class="macro ${cls}${st}"><div class="macro-top"><span>${label}</span><b>${fmt(val)}<small> / ${fmt(target)} g</small></b></div>
     <div class="mbar"><i style="transform:scaleX(${clamp(frac, 0, 1)})"></i></div></div>`;
 }
 const I = {
@@ -385,12 +388,12 @@ function renderOggi() {
   }
   html += `<section class="card sum-card">
       <div class="sum-main">
-        <div class="ring-box ${over ? 'over' : ''}">${ring(t.kcal ? tot.kcal / t.kcal : 0, 152, 14, 'kcal-ring')}
+        <div class="ring-box ${kcalState(tot.kcal, t.kcal)}">${ring(t.kcal ? tot.kcal / t.kcal : 0, 152, 14, 'kcal-ring')}
           <div class="ring-center"><b class="big">${rollNum('kcal-' + day, fmt(Math.abs(left)))}</b><span>${over ? 'kcal oltre' : 'kcal rimaste'}</span></div></div>
         <div class="sum-side">
           <div><span>Obiettivo</span><b>${fmt(t.kcal)}</b></div>
           <div><span>Mangiate</span><b>${fmt(tot.kcal)}</b></div>
-          ${t.type ? `<button type="button" class="goal-chip" data-act="plan-open">Piano · ${esc(DAY_TYPES[t.type].name)}</button>` : `<button type="button" class="goal-chip" data-act="tab-profilo">${esc(g.name)}${esc(paceTxt)}</button>`}
+          ${t.type ? `<button type="button" class="goal-chip dt-${t.type}" data-act="plan-open">Piano · ${esc(DAY_TYPES[t.type].name)}</button>` : `<button type="button" class="goal-chip" data-act="tab-profilo">${esc(g.name)}${esc(paceTxt)}</button>`}
         </div>
       </div>
       <div class="macros">${macroBar('Proteine', tot.p, t.p, 'p')}${macroBar('Carboidrati', tot.c, t.c, 'c')}${macroBar('Grassi', tot.f, t.f, 'f')}</div>

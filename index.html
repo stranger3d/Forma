@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="it" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Forma</title>
+  <meta name="description" content="Calorie, pasti, peso e palestra.">
+  <meta name="theme-color" content="#0e1012">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Forma">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="style.css">
+  <script>
+    // apply the saved theme before the first paint (dark is the default)
+    try { var t = ((JSON.parse(localStorage.getItem('forma:v1')) || {}).settings || {}).theme; if (t === 'light') document.documentElement.dataset.theme = 'light'; else if (t === 'auto') document.documentElement.dataset.theme = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'; } catch (e) {}
+  </script>
+</head>
+<body>
+  <main id="views">
+    <section class="view active" id="v-oggi" aria-label="Oggi"></section>
+    <section class="view" id="v-peso" aria-label="Peso"></section>
+    <section class="view" id="v-palestra" aria-label="Palestra"></section>
+    <section class="view" id="v-profilo" aria-label="Profilo"></section>
+  </main>
+
+  <!-- rest timer: stays visible on every tab while it runs -->
+  <div class="timer" id="timer" hidden>
+    <svg class="timer-ring" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="19" class="tr-bg"/><circle cx="22" cy="22" r="19" class="tr-fg" id="timer-arc"/></svg>
+    <div class="timer-txt"><span class="timer-label" id="timer-label">Recupero</span><b id="timer-val">1:30</b></div>
+    <button type="button" class="timer-btn" data-timer="-15" aria-label="Togli 15 secondi">−15</button>
+    <button type="button" class="timer-btn" data-timer="15" aria-label="Aggiungi 15 secondi">+15</button>
+    <button type="button" class="timer-btn x" data-timer="stop" aria-label="Ferma il timer">✕</button>
+  </div>
+
+  <nav class="tabbar" aria-label="Sezioni">
+    <button type="button" class="tab active" data-tab="oggi">
+      <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path fill="currentColor" d="M12 2c3.5 3 6.5 6.6 6.5 11a6.5 6.5 0 0 1-13 0c0-2.6 1.1-4.7 2.7-6.4.2 2 1.2 3.4 2.6 3.9C10.3 7.6 10.8 4.6 12 2zm0 18a3 3 0 0 0 3-3c0-1.5-.8-2.8-2-4-.3 1.3-1.1 2.2-2.2 2.6-.9.3-1.8 1-1.8 2.4a3 3 0 0 0 3 2z"/></svg>
+      <span>Oggi</span>
+    </button>
+    <button type="button" class="tab" data-tab="peso">
+      <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 17l5-5 4 3 8-8M15 7h5v5"/></svg>
+      <span>Peso</span>
+    </button>
+    <button type="button" class="tab" data-tab="palestra">
+      <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path fill="currentColor" d="M3 9h2V7a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v4h8V7a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v2h2a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-2v2a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-4H8v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-2H3a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1z"/></svg>
+      <span>Palestra</span>
+    </button>
+    <button type="button" class="tab" data-tab="profilo">
+      <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path fill="currentColor" d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9zm0 2c-4.4 0-8 2.3-8 5.2V21h16v-1.8c0-2.9-3.6-5.2-8-5.2z"/></svg>
+      <span>Profilo</span>
+    </button>
+  </nav>
+
+  <div class="scanner" id="scanner" hidden>
+    <video id="scan-video" playsinline muted autoplay></video>
+    <div class="scan-frame" aria-hidden="true"></div>
+    <p class="scan-msg">Inquadra il codice a barre</p>
+    <button type="button" class="scan-close" id="scan-close">Annulla</button>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden><span id="toast-txt"></span><button type="button" id="toast-btn" hidden></button></div>
+  <input type="file" id="import-file" accept="application/json,.json" hidden>
+
+  <script src="foods.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

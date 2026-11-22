@@ -1,0 +1,79 @@
+// Common foods with average values per 100 g (raw unless the name says otherwise).
+// They work offline and cover what has no barcode (meat, fruit, vegetables, loose rice...).
+// Values are rounded averages from Italian and European food tables: good for daily
+// counting, not lab precision. Every value can be changed in the app.
+// Fields: kcal, p (protein), c (carbohydrates), f (fat), all per 100 g;
+// s = usual portion in grams, pc = weight of one piece in grams.
+window.FORMA_FOODS = [
+  // carne e pesce
+  ['Petto di pollo', 100, 23.3, 0, 0.8, { s: 150 }],
+  ['Petto di tacchino', 107, 24, 0, 1.2, { s: 150 }],
+  ['Manzo magro', 129, 21.5, 0, 5, { s: 150 }],
+  ['Carne macinata di manzo 5%', 125, 21, 0, 5, { s: 150 }],
+  ['Lonza di maiale', 146, 21, 0, 7, { s: 150 }],
+  ['Bresaola', 151, 32, 0.5, 2.6, { s: 50 }],
+  ['Prosciutto crudo', 224, 27, 0, 13, { s: 50 }],
+  ['Prosciutto cotto', 138, 19.8, 0.9, 6, { s: 50 }],
+  ['Salmone', 185, 20, 0, 12, { s: 150 }],
+  ['Merluzzo', 71, 17, 0, 0.3, { s: 180 }],
+  ['Orata', 121, 19.7, 0, 3.8, { s: 180 }],
+  ['Gamberi', 71, 13.6, 2.9, 0.6, { s: 150 }],
+  ['Tonno al naturale (sgocciolato)', 103, 23.5, 0, 1, { s: 80 }],
+  ["Tonno sott'olio (sgocciolato)", 192, 25, 0, 10, { s: 80 }],
+  // uova e latticini
+  ['Uovo intero', 128, 12.4, 0, 8.7, { pc: 55 }],
+  ['Albume', 43, 10.7, 0, 0.2, { s: 100 }],
+  ['Latte parzialmente scremato', 46, 3.5, 5, 1.6, { s: 200 }],
+  ['Latte scremato', 34, 3.4, 5, 0.2, { s: 200 }],
+  ['Yogurt greco 0%', 57, 10, 4, 0, { s: 170 }],
+  ['Yogurt bianco intero', 66, 3.8, 4.3, 3.9, { s: 125 }],
+  ['Skyr', 63, 11, 4, 0.2, { s: 150 }],
+  ['Fiocchi di latte', 104, 12.3, 3, 4.5, { s: 150 }],
+  ['Ricotta vaccina', 146, 8.8, 3.5, 10.9, { s: 100 }],
+  ['Mozzarella', 253, 18.7, 0.7, 19.5, { s: 125 }],
+  ['Parmigiano', 392, 33.5, 0, 28.1, { s: 10 }],
+  // cereali e amidi
+  ['Pasta di semola (cruda)', 356, 12.5, 72, 1.5, { s: 80 }],
+  ['Pasta integrale (cruda)', 340, 13, 64, 2.5, { s: 80 }],
+  ['Riso (crudo)', 332, 6.7, 80, 0.4, { s: 80 }],
+  ['Riso basmati (crudo)', 350, 8, 78, 0.6, { s: 80 }],
+  ['Pane comune', 270, 8.5, 56, 1, { s: 50 }],
+  ['Pane integrale', 240, 9, 45, 2.5, { s: 50 }],
+  ["Fiocchi d'avena", 372, 13, 60, 7, { s: 40 }],
+  ['Gallette di riso', 380, 8, 81, 3, { pc: 8 }],
+  ['Fette biscottate', 410, 11, 75, 6, { pc: 9 }],
+  ['Patate', 77, 2, 17, 0.1, { s: 200 }],
+  ['Patate dolci', 86, 1.6, 20, 0.1, { s: 200 }],
+  ['Pizza margherita', 250, 10, 33, 8.5, { s: 300 }],
+  // legumi
+  ['Ceci lessati', 120, 7, 17, 2.4, { s: 150 }],
+  ['Lenticchie lessate', 116, 9, 20, 0.4, { s: 150 }],
+  ['Fagioli lessati', 105, 7, 17, 0.5, { s: 150 }],
+  // frutta
+  ['Banana', 89, 1.1, 23, 0.3, { pc: 120 }],
+  ['Mela', 52, 0.3, 14, 0.2, { pc: 180 }],
+  ['Arancia', 47, 0.9, 12, 0.1, { pc: 200 }],
+  ['Kiwi', 61, 1.1, 15, 0.5, { pc: 75 }],
+  ['Fragole', 32, 0.7, 7.7, 0.3, { s: 150 }],
+  ['Mirtilli', 57, 0.7, 14, 0.3, { s: 100 }],
+  // verdura
+  ['Broccoli', 34, 2.8, 7, 0.4, { s: 200 }],
+  ['Zucchine', 17, 1.2, 3.1, 0.3, { s: 200 }],
+  ['Insalata', 15, 1.4, 2.9, 0.2, { s: 80 }],
+  ['Pomodori', 18, 0.9, 3.9, 0.2, { s: 150 }],
+  ['Carote', 41, 0.9, 10, 0.2, { s: 100 }],
+  ['Spinaci', 23, 2.9, 3.6, 0.4, { s: 200 }],
+  ['Peperoni', 26, 1, 6, 0.3, { s: 150 }],
+  // grassi e frutta secca
+  ['Olio extravergine', 884, 0, 0, 100, { s: 10 }],
+  ['Burro', 717, 0.9, 0.1, 81, { s: 10 }],
+  ['Avocado', 160, 2, 8.5, 14.7, { s: 70 }],
+  ['Mandorle', 603, 22, 4.6, 55.3, { s: 30 }],
+  ['Noci', 689, 14.3, 5.1, 68.1, { s: 30 }],
+  ['Burro di arachidi', 600, 25, 12, 50, { s: 15 }],
+  ['Cioccolato fondente 70%', 580, 9, 34, 43, { s: 20 }],
+  // altro
+  ['Miele', 304, 0.4, 80, 0, { s: 10 }],
+  ['Zucchero', 392, 0, 100, 0, { s: 5 }],
+  ['Proteine whey', 380, 78, 6, 5, { s: 30 }],
+];

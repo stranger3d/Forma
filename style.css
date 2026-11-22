@@ -509,3 +509,21 @@ body.has-timer #views { padding-bottom: calc(var(--tabh) + env(safe-area-inset-b
 .add-btn.scan-btn { background: var(--card2); color: var(--text); }
 .scan-wide { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin: 10px 0 4px; padding: 12px; border-radius: 14px; background: var(--accent-soft); color: var(--accent-ink); font-weight: 650; }
 .search-row:has(input:not(:placeholder-shown)) + .scan-wide { display: none; }
+
+/* animations in the session: one figure per exercise, supersets side by side */
+.block-anims { display: grid; grid-template-columns: minmax(0, 220px); justify-content: center; gap: 8px; width: 100%; }
+.block-anims.two { grid-template-columns: 1fr 1fr; }
+.block-anims .ba { position: relative; display: block; }
+.block-anims small { position: absolute; top: 6px; left: 8px; font-size: 11px; font-weight: 700; color: var(--accent-ink); }
+.ex-anim.sm { margin: 0; border-radius: 14px; }
+.ex-anim.sm svg { max-height: 120px; }
+.ex-anim.sm .fg { stroke-width: 6.5; }
+.ba-none { display: block; height: 60px; border-radius: 14px; background: var(--card); }
+.ss-info { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.ss-col { display: grid; align-content: start; gap: 6px; }
+.ss-col b { font-size: 15px; line-height: 1.25; }
+.ss-col .ex-muscles { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+.ex-how.sm { font-size: 13.5px; line-height: 1.45; }
+.first-hint { margin-top: 0; }
+.ss-col .ss-n { justify-self: start; }
+.block .ex-anim.sm { background: var(--card2); }

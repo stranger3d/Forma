@@ -201,21 +201,35 @@ function frameSvg(spec, k) {
   return drawProps(spec, j0, j, 's') + drawSide(p, j);
 }
 // markup for an exercise animation (empty when there is none)
-function exerciseAnim(name) {
+function exerciseAnim(name, cls = '') {
   const spec = ANIMS[name];
   if (!spec) return '';
-  return `<div class="ex-anim" data-anim="${esc(name)}"><svg viewBox="0 -24 200 174" role="img" aria-label="Animazione: ${esc(name)}">
+  return `<div class="ex-anim ${cls}" data-anim="${esc(name)}"><svg viewBox="0 -24 200 174" role="img" aria-label="Animazione: ${esc(name)}">
     <line class="ground" x1="10" y1="${GROUND}" x2="190" y2="${GROUND}"/><g class="fig">${frameSvg(spec, 0)}</g></svg></div>`;
 }
-// loop: hold the start, go (lifting), hold, come back slower (lowering)
-const CYCLE = [0.5, 0.9, 0.45, 1.3];
-function animK(t) {
-  const tot = CYCLE.reduce((a, b) => a + b, 0);
+// Loop at the real rhythm of the lift: concentric (effort) fast, hold at contraction,
+// eccentric (lowering) slow, short pause in stretch. Seconds per kind:
+// main 2-0-1, secondary 2-1-1, isolation 3-1-1 (lowering - hold - lifting).
+const RHYTHM = {
+  main: { con: 1, top: 0.4, ecc: 2, bottom: 0.3 },
+  acc: { con: 1, top: 1, ecc: 2, bottom: 0.3 },
+  iso: { con: 1, top: 1, ecc: 3, bottom: 0.3 },
+};
+// exercises drawn from the top (A) to the bottom (B): there A→B is the lowering
+const ECC_AB = new Set(['Panca inclinata bilanciere', 'Panca inclinata manubri', 'Panca piana manubri', 'Panca piana', 'Dip alle parallele', 'Dip tricipiti', 'Dip',
+  'Squat', 'Stacco rumeno', 'Affondi bulgari', 'Affondi']);
+function animK(t, name) {
+  const kind = typeof exInfo === 'function' ? exInfo(name).kind : 'acc';
+  const r = RHYTHM[kind] || RHYTHM.acc;
+  const tot = r.con + r.top + r.ecc + r.bottom;
   let x = (t / 1000) % tot;
-  if (x < CYCLE[0]) return 0; x -= CYCLE[0];
-  if (x < CYCLE[1]) return ease(x / CYCLE[1]); x -= CYCLE[1];
-  if (x < CYCLE[2]) return 1; x -= CYCLE[2];
-  return 1 - ease(x / CYCLE[3]);
+  // c = 0 stretched, 1 contracted
+  let c;
+  if (x < r.con) c = ease(x / r.con);
+  else if ((x -= r.con) < r.top) c = 1;
+  else if ((x -= r.top) < r.ecc) c = 1 - ease(x / r.ecc);
+  else c = 0;
+  return ECC_AB.has(name) ? 1 - c : c;
 }
 function startAnims(root) {
   const boxes = Array.from(root.querySelectorAll('[data-anim]'));
@@ -227,7 +241,7 @@ function startAnims(root) {
     boxes.forEach((b) => {
       const spec = ANIMS[b.dataset.anim]; if (!spec) return;
       const g = b.querySelector('.fig');
-      g.innerHTML = frameSvg(spec, still ? 1 : animK(now - t0));
+      g.innerHTML = frameSvg(spec, still ? 1 : animK(now - t0, b.dataset.anim));
     });
     if (!still) requestAnimationFrame(step);
   };
